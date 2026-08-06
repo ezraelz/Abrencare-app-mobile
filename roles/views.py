@@ -2,9 +2,9 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render
-from rest_framework.view import APIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.status import status
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Role

@@ -56,6 +56,14 @@ INSTALLED_APPS = [
     "services",
     "roles",
     "health_data",
+    "appointments",
+    "consultations",
+    "doctors",
+    "notifications",
+    "patients",
+    "payments",
+    "reviews",
+    "ai",
 ]
 
 # ======================================================
@@ -86,15 +94,15 @@ MIDDLEWARE = [
 # ======================================================
 # CORS & CSRF (CRITICAL FOR REACT)
 # ======================================================
-#CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
-#CORS_ALLOWED_ORIGINS = [
-#     "http://127.0.0.1:8000",
-#]
+CORS_ALLOWED_ORIGINS = [
+     "http://127.0.0.1:8000",
+]
 
-#CSRF_TRUSTED_ORIGINS = [
-#     "http://127.0.0.1:8000",
-#]
+CSRF_TRUSTED_ORIGINS = [
+     "http://127.0.0.1:8000",
+]
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -144,6 +152,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Backend.wsgi.application'
 ASGI_APPLICATION = 'Backend.asgi.application'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                ("127.0.0.1", 6379),
+            ],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
