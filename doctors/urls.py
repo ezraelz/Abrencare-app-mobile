@@ -3,17 +3,13 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     SpecialtyViewSet,
-    DoctorViewSet,
+    DoctorView,
+    DoctorDetailView,
     QualificationViewSet,
     DoctorAvailabilityViewSet,
 )
 
-router = DefaultRouter()
-router.register("specialties", SpecialtyViewSet)
-router.register("doctors", DoctorViewSet)
-router.register("qualifications", QualificationViewSet)
-router.register("availability", DoctorAvailabilityViewSet)
-
 urlpatterns = [
-    path("", include(router.urls)),
+    path("doctors/", DoctorView.as_view(), name='doctors'),
+    path("doctors/<int:pk>/", DoctorDetailView.as_view(), name='doctor-detail'),
 ]

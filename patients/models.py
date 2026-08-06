@@ -11,6 +11,9 @@ class Patient(models.Model):
     emergency_contact = models.CharField(max_length=20)
     address = models.TextField()
 
+    def __str__(self):
+        return self.user.username
+    
 class MedicalRecord(models.Model):
     patient = models.ForeignKey(
         Patient,

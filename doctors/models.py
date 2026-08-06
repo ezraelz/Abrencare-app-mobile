@@ -13,14 +13,17 @@ class Doctor(models.Model):
     license_number = models.CharField(max_length=100)
     years_of_experience = models.PositiveIntegerField()
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
-    bio = models.TextField()
+    bio = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False)
     specialty = models.ForeignKey(Specialty,
         on_delete=models.SET_NULL,
-        null=True
+        null=True,
+        blank=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.user.username
 
 class Qualification(models.Model):
     doctor = models.ForeignKey(
