@@ -112,21 +112,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=["is_active"])
 
 
+
 class PasswordHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_history')
-    password = models.CharField(max_length=128)  # Store hashed password
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="password_history",
+    )
+    password = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name_plural = "Password Histories"
-        ordering = ['-created_at']
-    
+
     def save(self, *args, **kwargs):
-        # Hash the password before saving
-        if not self.password.startswith('pbkdf2_sha256$'):
+        if not self.password.startswith(("pbkdf2_", "argon2", "bcrypt")):
             self.password = make_password(self.password)
+
         super().save(*args, **kwargs)
-    
+
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
     

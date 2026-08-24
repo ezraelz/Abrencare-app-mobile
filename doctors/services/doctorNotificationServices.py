@@ -7,9 +7,7 @@ class DoctorNotificationService:
 
     @classmethod
     def notify_created(cls, doctor):
-
         admins = User.objects.filter(role__role_name="admin")
-
         for admin in admins:
             NotificationService.create(
                 user=admin,

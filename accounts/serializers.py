@@ -42,11 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "profile_picture_url",
 
-            # Structured sections
-            "personal_information",
-            "medical_information",
-            "emergency_contact",
-
             # Raw fields (optional but useful)
             "first_name",
             "last_name",

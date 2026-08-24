@@ -36,7 +36,6 @@ class Qualification(models.Model):
     year_of_completion = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-
 class DoctorAvailability(models.Model):
     doctor = models.ForeignKey(
         Doctor,

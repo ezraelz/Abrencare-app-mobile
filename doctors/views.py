@@ -18,6 +18,9 @@ from .serializers import (
     QualificationSerializer,
     DoctorAvailabilitySerializer,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SpecialtyViewSet(viewsets.ModelViewSet):
@@ -38,7 +41,10 @@ class DoctorView(APIView):
         serializer = DoctorRegisterSerializer(data=request.data)
         if serializer.is_valid():
             doctor = serializer.save()
-            DoctorNotificationService.notify_created(doctor)
+            try:
+                DoctorNotificationService.notify_created(doctor)
+            except Exception:
+                logger.exception("Failed to send doctor creation notification.")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
