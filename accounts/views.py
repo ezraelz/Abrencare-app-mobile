@@ -145,7 +145,6 @@ class UsersListView(generics.ListAPIView):
 class UserProfileView(APIView):
     """
     Get or update the currently authenticated user's profile.
-
     This endpoint intentionally does not accept a user ID.
     """
 

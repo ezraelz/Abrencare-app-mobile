@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.ForeignKey(
         "roles.Role",
         verbose_name="user_role",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         blank=True,
         null=True
     )
