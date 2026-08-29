@@ -12,6 +12,7 @@ from .models import (
     FamilyPatient,
     FamilyInvitation,
     InvitationDelivery,
+    FamilyAuditLog
 )
 
 User = get_user_model()

@@ -5,12 +5,8 @@ from django.db import transaction
 
 from patients.models import Patient
 
-from ..models import (
-    FamilyPatient,
-    FamilyAuditLog,
-)
-
-from .audit import create_audit_log
+from .audit import _create_audit_log
+from ..models import FamilyAuditLog, FamilyPatient
 
 
 User = get_user_model()
@@ -71,7 +67,6 @@ def create_family_patient(
     # --------------------------------------------------------
 
     if not user:
-
         username = (
             validated_data.get("username")
             or secrets.token_hex(8)
@@ -128,7 +123,7 @@ def create_family_patient(
         )
 
     # --------------------------------------------------------
-    # Prevent duplicate relationship
+    # Prevent duplicate family relationship
     # --------------------------------------------------------
 
     family_patient, created = (
@@ -153,18 +148,18 @@ def create_family_patient(
             "This patient already belongs to the family."
         )
 
-    # --------------------------------------------------------
-    # Audit
-    # --------------------------------------------------------
-
-    create_audit_log(
+    _create_audit_log(
         family=family,
         actor=created_by,
         action=FamilyAuditLog.Action.PATIENT_CREATED,
         patient=patient,
         metadata={
-            "relationship": family_patient.relationship,
-            "is_primary": family_patient.is_primary,
+            "relationship": (
+                family_patient.relationship
+            ),
+            "is_primary": (
+                family_patient.is_primary
+            ),
         },
     )
 

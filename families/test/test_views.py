@@ -5,6 +5,16 @@ These hit the real URLs and the real service layer (no mocking) so
 they exercise permission checks, serializer validation, and the
 service logic together the way a real client request would.
 
+`families.services` is a package (see families/services/__init__.py),
+split into per-concern modules (crypto.py, verification.py, etc.)
+that are re-exported from the package root. The one place that needs
+to know about the internal module layout is the `generate_otp` patch
+target below: `verification.py` imports that function into its own
+namespace (`from .crypto import generate_otp`) rather than looking it
+up on the package root at call time, so patching
+`families.services.generate_otp` would silently miss the real call
+and requests would fall through to a real random OTP.
+
 Run with:
     python manage.py test families.tests.test_views
 """
@@ -27,6 +37,13 @@ from families.models import (
 from patients.models import Patient
 
 User = get_user_model()
+
+# `verification.py` binds `generate_otp` into its own module namespace
+# via `from .crypto import generate_otp`, so that's what must be
+# patched -- patching `families.services.generate_otp` (the
+# package-root re-export) would not affect the call inside
+# `request_invitation_contact_verification`.
+GENERATE_OTP_PATCH_TARGET = "families.services.verification.generate_otp"
 
 
 def make_user(username, **kwargs):
@@ -413,7 +430,7 @@ class InvitationOTPVerificationViewTests(APITestCase):
         self.url = reverse("invitation-verify-otp", kwargs={"token": self.raw_token})
 
     def test_correct_otp_succeeds(self):
-        with mock.patch("families.services.generate_otp", return_value="123456"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="123456"):
             self.client.post(
                 reverse("invitation-verify-contact", kwargs={"token": self.raw_token})
             )
@@ -459,7 +476,7 @@ class InvitationAcceptViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def _verify_contact(self):
-        with mock.patch("families.services.generate_otp", return_value="999999"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="999999"):
             self.client.post(
                 reverse("invitation-verify-contact", kwargs={"token": self.raw_token})
             )
@@ -508,7 +525,7 @@ class InvitationRegistrationViewTests(APITestCase):
         self.url = reverse("invitation-register", kwargs={"token": self.raw_token})
 
     def _verify_contact(self):
-        with mock.patch("families.services.generate_otp", return_value="121212"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="121212"):
             self.client.post(
                 reverse("invitation-verify-contact", kwargs={"token": self.raw_token})
             )
@@ -586,7 +603,7 @@ class PatientClaimCompletionViewTests(APITestCase):
         self.url = reverse("patient-claim-complete", kwargs={"token": self.raw_token})
 
     def _verify_contact(self):
-        with mock.patch("families.services.generate_otp", return_value="343434"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="343434"):
             self.client.post(
                 reverse("invitation-verify-contact", kwargs={"token": self.raw_token})
             )
@@ -635,50 +652,86 @@ class InvitationDeliveryListViewTests(APITestCase):
     def setUp(self):
         self.owner = make_user("owner13")
         self.outsider = make_user("outsider13")
-        self.family = services.create_family(user=self.owner, name="Delivery Family")
+
+        self.family = services.create_family(
+            user=self.owner,
+            name="Delivery Family",
+        )
+
         self.invitation, self.raw_token = services.invite_family_member(
             family=self.family,
             invited_by=self.owner,
-            validated_data={"name": "Delivery Target", "email": "deliverytarget13@example.com"},
+            validated_data={
+                "name": "Delivery Target",
+                "email": "deliverytarget13@example.com",
+            },
         )
-        services.request_invitation_contact_verification(token=self.raw_token)
+
+        services.request_invitation_contact_verification(
+            token=self.raw_token
+        )
+
         self.url = reverse(
             "invitation-delivery-list",
-            kwargs={"family_id": self.family.id, "invitation_id": self.invitation.id},
+            kwargs={
+                "family_id": self.family.id,
+                "invitation_id": self.invitation.id,
+            },
         )
 
     def test_requires_authentication(self):
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
 
     def test_family_member_can_view_deliveries(self):
         self.client.force_authenticate(self.owner)
+
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
         self.assertEqual(len(response.data), 1)
 
     def test_invitation_from_wrong_family_returns_404(self):
-        other_family = services.create_family(user=self.outsider, name="Other Family")
+        other_family = services.create_family(
+            user=self.outsider,
+            name="Other Family",
+        )
 
         self.client.force_authenticate(self.outsider)
+
         response = self.client.get(
             reverse(
                 "invitation-delivery-list",
-                kwargs={"family_id": other_family.id, "invitation_id": self.invitation.id},
+                kwargs={
+                    "family_id": other_family.id,
+                    "invitation_id": self.invitation.id,
+                },
             )
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_KNOWN_GAP_non_member_with_correct_ids_can_view_deliveries(self):
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+
+    def test_non_member_with_correct_ids_is_forbidden(self):
         """
-        InvitationDeliveryListView only declares IsAuthenticated, not
-        IsFamilyMember (unlike every other family-scoped view in this
-        module). Any authenticated user who knows a valid family_id +
-        invitation_id pair for someone else's family currently gets a
-        200, not a 403. This test documents that as current behavior;
-        it's worth confirming with the team whether IsFamilyMember
-        should be added to this view's permission_classes.
+        Knowing valid family and invitation IDs must not be sufficient
+        to access invitation delivery history.
         """
         self.client.force_authenticate(self.outsider)
+
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+        

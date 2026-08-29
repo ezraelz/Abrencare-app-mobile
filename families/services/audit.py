@@ -1,7 +1,11 @@
-from families.models import FamilyAuditLog
+from ..models import FamilyAuditLog
 
 
-def create_audit_log(
+# ============================================================
+# AUDIT HELPERS
+# ============================================================
+
+def _create_audit_log(
     *,
     family,
     action,

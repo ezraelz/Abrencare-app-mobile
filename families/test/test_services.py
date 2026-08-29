@@ -5,6 +5,18 @@ This is where the security-sensitive logic lives (token hashing,
 OTP verification, invitation consumption, account-claim flow), so
 it gets the deepest coverage.
 
+`families.services` is a package (see families/services/__init__.py),
+split into per-concern modules (crypto.py, verification.py,
+acceptance.py, etc.) that are re-exported from the package root. Tests
+call through the public `services.*` surface exactly as before -- the
+one place that needs to know about the internal module layout is the
+`generate_otp` patch target below, since `verification.py` imports
+that function into its own namespace (`from .crypto import
+generate_otp`) rather than looking it up on the package root at call
+time. Patching `families.services.generate_otp` would only replace
+the re-exported name in `__init__.py` and never reach the copy
+`verification.py` actually calls, so we patch it where it's used.
+
 Run with:
     python manage.py test families.tests.test_services
 """
@@ -26,6 +38,13 @@ from families.models import (
 from patients.models import Patient
 
 User = get_user_model()
+
+# `verification.py` binds `generate_otp` into its own module namespace
+# via `from .crypto import generate_otp`, so that's what must be
+# patched -- patching `families.services.generate_otp` (the
+# package-root re-export) would not affect the call inside
+# `request_invitation_contact_verification`.
+GENERATE_OTP_PATCH_TARGET = "families.services.verification.generate_otp"
 
 
 def make_user(username="user1", **kwargs):
@@ -455,7 +474,7 @@ class VerifyInvitationOTPTests(TestCase):
             services.verify_invitation_otp(token=self.raw_token, otp="123456")
 
     def _request_otp_and_get_plain_value(self):
-        with mock.patch("families.services.generate_otp", return_value="654321"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="654321"):
             services.request_invitation_contact_verification(token=self.raw_token)
         return "654321"
 
@@ -493,7 +512,7 @@ class VerifyInvitationOTPTests(TestCase):
     def test_max_attempts_exceeded_raises(self):
         self._request_otp_and_get_plain_value()
         FamilyInvitation.objects.filter(id=self.invitation.id).update(
-            otp_attempts=services.OTP_MAX_ATTEMPTS
+            otp_attempts=services.verification.OTP_MAX_ATTEMPTS
         )
 
         with self.assertRaises(ValueError):
@@ -515,7 +534,7 @@ class AcceptInvitationTests(TestCase):
             invited_by=self.owner,
             validated_data={"name": "Acceptor2", "email": "acceptor2@example.com"},
         )
-        with mock.patch("families.services.generate_otp", return_value="222222"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="222222"):
             services.request_invitation_contact_verification(token=raw_token)
         services.verify_invitation_otp(token=raw_token, otp="222222")
 
@@ -560,7 +579,7 @@ class AcceptInvitationTests(TestCase):
             invited_by=self.owner,
             validated_data={"name": "Mismatch", "email": "mismatch@example.com"},
         )
-        with mock.patch("families.services.generate_otp", return_value="333333"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="333333"):
             services.request_invitation_contact_verification(token=raw_token)
         services.verify_invitation_otp(token=raw_token, otp="333333")
 
@@ -574,7 +593,7 @@ class AcceptInvitationTests(TestCase):
             invited_by=self.owner,
             validated_data={"name": "AlreadyIn", "email": "alreadyin@example.com"},
         )
-        with mock.patch("families.services.generate_otp", return_value="444444"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="444444"):
             services.request_invitation_contact_verification(token=raw_token)
         services.verify_invitation_otp(token=raw_token, otp="444444")
 
@@ -600,7 +619,7 @@ class CompleteInvitationRegistrationTests(TestCase):
             invited_by=self.owner,
             validated_data={"name": "New Person", "email": email},
         )
-        with mock.patch("families.services.generate_otp", return_value="555555"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="555555"):
             services.request_invitation_contact_verification(token=raw_token)
         services.verify_invitation_otp(token=raw_token, otp="555555")
         return invitation, raw_token
@@ -692,7 +711,7 @@ class CompletePatientClaimTests(TestCase):
             invited_by=self.owner,
             validated_data={"email": "claimant@example.com"},
         )
-        with mock.patch("families.services.generate_otp", return_value="666666"):
+        with mock.patch(GENERATE_OTP_PATCH_TARGET, return_value="666666"):
             services.request_invitation_contact_verification(token=raw_token)
         services.verify_invitation_otp(token=raw_token, otp="666666")
         return invitation, raw_token
@@ -762,3 +781,4 @@ class CompletePatientClaimTests(TestCase):
                     "password": "strongpassword123",
                 },
             )
+            

@@ -1,13 +1,12 @@
 from django.db import transaction
 
-from .audit import create_audit_log
+from .audit import _create_audit_log
+from ..models import Family, FamilyAuditLog, FamilyMember
 
-from ..models import (
-    Family,
-    FamilyMember,
-    FamilyAuditLog,
-)
 
+# ============================================================
+# FAMILY
+# ============================================================
 
 @transaction.atomic
 def create_family(
@@ -35,7 +34,7 @@ def create_family(
         can_manage_family_patients=True,
     )
 
-    create_audit_log(
+    _create_audit_log(
         family=family,
         action=FamilyAuditLog.Action.FAMILY_CREATED,
         actor=user,

@@ -2,6 +2,10 @@ import hashlib
 import secrets
 
 
+# ============================================================
+# TOKEN HELPERS
+# ============================================================
+
 def generate_invitation_token():
     """
     Generate a cryptographically secure invitation token.
@@ -32,6 +36,10 @@ def hash_invitation_token(token):
         token.encode("utf-8")
     ).hexdigest()
 
+
+# ============================================================
+# OTP HELPERS
+# ============================================================
 
 def generate_otp():
     """

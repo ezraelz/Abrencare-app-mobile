@@ -1,98 +1,23 @@
-import hashlib
 import hmac
-import secrets
 from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
 
-from ..models import (
-    FamilyInvitation,
-    InvitationDelivery,
-    FamilyAuditLog,
+from .audit import _create_audit_log
+from .constants import (
+    OTP_EXPIRY_MINUTES,
+    OTP_MAX_ATTEMPTS,
+    OTP_RESEND_COOLDOWN_SECONDS,
 )
-
-from .audit import create_audit_log
-from .invitation import _get_invitation
-
-
-OTP_EXPIRY_MINUTES = 10
-OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_COOLDOWN_SECONDS = 60
+from .contact_masking import _mask_contact
+from .crypto import generate_otp, hash_otp
+from .lookup import _get_invitation
+from ..models import FamilyAuditLog, InvitationDelivery
 
 
 # ============================================================
-# OTP HELPERS
-# ============================================================
-
-def generate_otp():
-    """
-    Generate a cryptographically secure six-digit OTP.
-    """
-
-    return f"{secrets.randbelow(1_000_000):06d}"
-
-
-def hash_otp(otp):
-    """
-    Hash an OTP before persistence.
-    """
-
-    if not otp:
-        return ""
-
-    return hashlib.sha256(
-        otp.encode("utf-8")
-    ).hexdigest()
-
-
-# ============================================================
-# CONTACT MASKING
-# ============================================================
-
-def mask_contact(
-    value,
-    channel,
-):
-    """
-    Mask email or phone information before exposing it.
-    """
-
-    if not value:
-        return ""
-
-    if channel == "email":
-
-        if "@" not in value:
-            return "***"
-
-        local, domain = value.split(
-            "@",
-            1,
-        )
-
-        if len(local) <= 2:
-            masked_local = "*" * len(local)
-        else:
-            masked_local = (
-                local[0]
-                + "*" * (len(local) - 2)
-                + local[-1]
-            )
-
-        return f"{masked_local}@{domain}"
-
-    if len(value) <= 4:
-        return "*" * len(value)
-
-    return (
-        "*" * (len(value) - 4)
-        + value[-4:]
-    )
-
-
-# ============================================================
-# REQUEST OTP
+# REQUEST CONTACT VERIFICATION
 # ============================================================
 
 @transaction.atomic
@@ -101,12 +26,16 @@ def request_invitation_contact_verification(
     token,
 ):
     """
-    Generate and persist a new invitation OTP.
+    Generate a new OTP for invitation contact verification.
 
-    The raw OTP is intentionally NOT returned.
-
-    Notification delivery should happen through the
-    notification/task layer.
+    Security guarantees:
+        - invitation must be valid
+        - invitation must be pending
+        - resend cooldown is enforced
+        - previous OTP is invalidated
+        - OTP is hashed before persistence
+        - raw OTP is never returned
+        - raw OTP is never persisted
     """
 
     invitation = _get_invitation(
@@ -117,17 +46,15 @@ def request_invitation_contact_verification(
     now = timezone.now()
 
     # --------------------------------------------------------
-    # Cooldown
+    # Resend cooldown
     # --------------------------------------------------------
 
     if invitation.otp_sent_at:
-
         elapsed = (
             now - invitation.otp_sent_at
         ).total_seconds()
 
         if elapsed < OTP_RESEND_COOLDOWN_SECONDS:
-
             remaining = max(
                 int(
                     OTP_RESEND_COOLDOWN_SECONDS
@@ -146,23 +73,19 @@ def request_invitation_contact_verification(
     # --------------------------------------------------------
 
     if invitation.email:
-
         channel = (
             InvitationDelivery
             .Channel
             .EMAIL
         )
-
         destination = invitation.email
 
     elif invitation.phone_number:
-
         channel = (
             InvitationDelivery
             .Channel
             .SMS
         )
-
         destination = invitation.phone_number
 
     else:
@@ -201,21 +124,25 @@ def request_invitation_contact_verification(
     )
 
     # --------------------------------------------------------
-    # Delivery
+    # Delivery record
     # --------------------------------------------------------
 
     delivery = InvitationDelivery.objects.create(
         invitation=invitation,
         channel=channel,
         destination=destination,
-        status=InvitationDelivery.Status.PENDING,
+        status=(
+            InvitationDelivery
+            .Status
+            .PENDING
+        ),
     )
 
     # --------------------------------------------------------
     # Audit
     # --------------------------------------------------------
 
-    create_audit_log(
+    _create_audit_log(
         family=invitation.family,
         action=(
             FamilyAuditLog.Action
@@ -229,18 +156,24 @@ def request_invitation_contact_verification(
         },
     )
 
-    # IMPORTANT:
-    # `otp` exists only in local memory.
+    # --------------------------------------------------------
+    # Notification
+    # --------------------------------------------------------
     #
-    # Do not:
-    #   - return it
-    #   - log it
-    #   - store it
-    #   - audit it
+    # IMPORTANT:
+    #
+    # The raw OTP is available only in memory.
+    #
+    # The actual SMS/email provider should be called
+    # by the notification/task layer.
+    #
+    # Do not return otp from this function.
+    #
+    # --------------------------------------------------------
 
     return {
         "channel": channel,
-        "destination": mask_contact(
+        "destination": _mask_contact(
             destination,
             channel,
         ),
@@ -262,7 +195,13 @@ def verify_invitation_otp(
     otp,
 ):
     """
-    Atomically verify an invitation OTP.
+    Verify an invitation OTP atomically.
+
+    The invitation row is locked during verification.
+
+    Every failed attempt is persisted.
+
+    A fifth failed attempt locks OTP verification.
     """
 
     invitation = _get_invitation(
@@ -273,7 +212,7 @@ def verify_invitation_otp(
     now = timezone.now()
 
     # --------------------------------------------------------
-    # Locked
+    # Already locked
     # --------------------------------------------------------
 
     if invitation.otp_locked_at:
@@ -283,7 +222,7 @@ def verify_invitation_otp(
         )
 
     # --------------------------------------------------------
-    # Missing OTP
+    # No OTP
     # --------------------------------------------------------
 
     if not invitation.otp_hash:
@@ -292,7 +231,7 @@ def verify_invitation_otp(
         )
 
     # --------------------------------------------------------
-    # Expired
+    # Expired OTP
     # --------------------------------------------------------
 
     if (
@@ -305,13 +244,11 @@ def verify_invitation_otp(
         )
 
     # --------------------------------------------------------
-    # Attempt limit
+    # Attempts already exhausted
     # --------------------------------------------------------
 
     if invitation.otp_attempts >= OTP_MAX_ATTEMPTS:
-
         invitation.otp_locked_at = now
-
         invitation.save(
             update_fields=[
                 "otp_locked_at",
@@ -319,9 +256,12 @@ def verify_invitation_otp(
             ]
         )
 
-        create_audit_log(
+        _create_audit_log(
             family=invitation.family,
-            action=FamilyAuditLog.Action.OTP_LOCKED,
+            action=(
+                FamilyAuditLog.Action
+                .OTP_LOCKED
+            ),
             invitation=invitation,
             patient=invitation.patient,
         )
@@ -332,7 +272,7 @@ def verify_invitation_otp(
         )
 
     # --------------------------------------------------------
-    # Increment BEFORE comparison
+    # Increment attempt BEFORE comparison
     # --------------------------------------------------------
 
     invitation.otp_attempts += 1
@@ -343,16 +283,14 @@ def verify_invitation_otp(
     )
 
     # --------------------------------------------------------
-    # Invalid
+    # Invalid OTP
     # --------------------------------------------------------
 
     if not is_valid:
-
         if (
             invitation.otp_attempts
             >= OTP_MAX_ATTEMPTS
         ):
-
             invitation.otp_locked_at = now
 
             invitation.save(
@@ -363,9 +301,12 @@ def verify_invitation_otp(
                 ]
             )
 
-            create_audit_log(
+            _create_audit_log(
                 family=invitation.family,
-                action=FamilyAuditLog.Action.OTP_LOCKED,
+                action=(
+                    FamilyAuditLog.Action
+                    .OTP_LOCKED
+                ),
                 invitation=invitation,
                 patient=invitation.patient,
                 metadata={
@@ -418,7 +359,7 @@ def verify_invitation_otp(
         ]
     )
 
-    create_audit_log(
+    _create_audit_log(
         family=invitation.family,
         action=(
             FamilyAuditLog.Action
