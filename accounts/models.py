@@ -3,13 +3,31 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.contrib.auth.hashers import check_password, make_password
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError("Email is required")
-        email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **extra_fields)
-        user.set_password(password)
-        user.save()
+    def create_user(
+        self,
+        username,
+        email=None,
+        password=None,
+        **extra_fields
+    ):
+        if email:
+            email = self.normalize_email(email)
+
+        user = self.model(
+            username=username,
+            email=email,
+            **extra_fields
+        )
+
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
+        user.save(
+            using=self._db
+        )
+
         return user
 
     def create_superuser(self, username, email, password=None, **extra_fields):
@@ -25,13 +43,27 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    class AccountStatus(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PENDING = "pending", "Pending"
+        INVITED = "invited", "Invited"
+        SUSPENDED = "suspended", "Suspended"
+
     username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True,null=True,blank=True,)
 
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
 
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    account_status = models.CharField(
+        max_length=20,
+        choices=AccountStatus.choices,
+        default=AccountStatus.ACTIVE,
+        db_index=True,
+        blank=True,
+        null=True
+    )
 
     # Address
     address = models.CharField(max_length=255, blank=True, null=True)

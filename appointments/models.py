@@ -226,4 +226,36 @@ class Appointment(models.Model):
 
         if errors:
             raise ValidationError(errors)
-        
+
+class AppointmentCheckIn(models.Model):
+
+    appointment = models.OneToOneField(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="check_in",
+    )
+
+    checked_in_at = models.DateTimeField()
+
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    gps_verified = models.BooleanField(
+        default=False,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+    

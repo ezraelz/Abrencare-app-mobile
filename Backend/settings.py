@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     # Local apps
     "accounts",
     "services",
+    "families",
     "roles",
     "health_data",
     "appointments",
