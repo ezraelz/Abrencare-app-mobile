@@ -243,7 +243,6 @@ class FamilyPatientDetailSerializer(serializers.ModelSerializer):
     """
 
     user = FamilyUserSerializer(
-        source="user",
         read_only=True,
     )
 
@@ -800,4 +799,29 @@ class VerifyInvitationOTPSerializer(serializers.Serializer):
 
         return value
 
+
+class FamilyAuditLogSerializer(
+    serializers.ModelSerializer
+):
+    actor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FamilyAuditLog
+        fields = [
+            "id",
+            "action",
+            "actor",
+            "actor_name",
+            "invitation",
+            "patient",
+            "metadata",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+    def get_actor_name(self, obj):
+        if not obj.actor:
+            return "System"
+
+        return obj.actor.get_full_name() or obj.actor.username
     

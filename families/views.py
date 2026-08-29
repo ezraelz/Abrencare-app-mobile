@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
@@ -14,6 +15,7 @@ from .models import (
     FamilyPatient,
     FamilyInvitation,
     InvitationDelivery,
+    FamilyAuditLog
 )
 
 from .permissions import (
@@ -35,6 +37,7 @@ from .serializers import (
     AcceptInvitationSerializer,
     VerifyInvitationOTPSerializer,
     CompleteInvitationRegistrationSerializer,
+    FamilyAuditLogSerializer
 )
 
 from .services import (
@@ -42,9 +45,6 @@ from .services import (
     create_family_patient,
     invite_family_member,
     create_patient_claim_invitation,
-
-    # These services should be implemented in services.py
-    # as part of the invitation/OTP flow.
     get_invitation_by_token,
     request_invitation_contact_verification,
     verify_invitation_otp,
@@ -840,6 +840,7 @@ class InvitationDeliveryListView(APIView):
 
     permission_classes = [
         IsAuthenticated,
+        IsFamilyMember,
     ]
 
     def get(self, request, family_id, invitation_id):
@@ -874,4 +875,44 @@ class InvitationDeliveryListView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    
+
+class FamilyAuditLogListView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsFamilyMember,
+    ]
+
+    def get(self, request, family_id):
+        family = get_object_or_404(
+            Family,
+            id=family_id,
+        )
+
+        if not FamilyMember.objects.filter(
+            family=family,
+            user=request.user,
+        ).exists():
+            raise PermissionDenied(
+                "You are not a member of this family."
+            )
+
+        logs = (
+            FamilyAuditLog.objects
+            .filter(family=family)
+            .select_related(
+                "actor",
+                "invitation",
+                "patient",
+            )
+            .order_by("-created_at")
+        )
+
+        serializer = FamilyAuditLogSerializer(
+            logs,
+            many=True,
+        )
+
+        return Response(
+            serializer.data
+        )
+     

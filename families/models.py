@@ -237,11 +237,21 @@ class FamilyInvitation(models.Model):
         blank=True,
     )
 
+    otp_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     otp_attempts = models.PositiveIntegerField(
         default=0,
     )
 
     contact_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    otp_locked_at = models.DateTimeField(
         null=True,
         blank=True,
     )
@@ -314,3 +324,164 @@ class InvitationDelivery(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
+
+
+class FamilyAuditLog(models.Model):
+    """
+    Immutable audit trail for security-sensitive family operations.
+
+    Never store:
+        - raw invitation tokens
+        - OTPs
+        - passwords
+        - authentication tokens
+        - unnecessary PHI
+    """
+
+    class Action(models.TextChoices):
+        FAMILY_CREATED = (
+            "family_created",
+            "Family Created",
+        )
+
+        PATIENT_CREATED = (
+            "patient_created",
+            "Patient Created",
+        )
+
+        MEMBER_INVITED = (
+            "member_invited",
+            "Family Member Invited",
+        )
+
+        PATIENT_CLAIM_INVITED = (
+            "patient_claim_invited",
+            "Patient Claim Invited",
+        )
+
+        INVITATION_OTP_REQUESTED = (
+            "invitation_otp_requested",
+            "Invitation OTP Requested",
+        )
+
+        INVITATION_CONTACT_VERIFIED = (
+            "invitation_contact_verified",
+            "Invitation Contact Verified",
+        )
+
+        MEMBER_ACCEPTED = (
+            "member_accepted",
+            "Family Membership Accepted",
+        )
+
+        MEMBER_REGISTERED = (
+            "member_registered",
+            "Family Member Registered",
+        )
+
+        PATIENT_CLAIMED = (
+            "patient_claimed",
+            "Patient Account Claimed",
+        )
+
+        INVITATION_CANCELLED = (
+            "invitation_cancelled",
+            "Invitation Cancelled",
+        )
+
+        INVITATION_EXPIRED = (
+            "invitation_expired",
+            "Invitation Expired",
+        )
+
+        OTP_LOCKED = (
+            "otp_locked",
+            "OTP Verification Locked",
+        )
+
+    family = models.ForeignKey(
+        Family,
+        on_delete=models.PROTECT,
+        related_name="audit_logs",
+    )
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="family_audit_logs",
+    )
+
+    action = models.CharField(
+        max_length=50,
+        choices=Action.choices,
+    )
+
+    invitation = models.ForeignKey(
+        FamilyInvitation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_logs",
+    )
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="family_audit_logs",
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+    )
+
+    user_agent = models.TextField(
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(
+                fields=["family", "-created_at"],
+                name="fa_family_created_idx",
+            ),
+            models.Index(
+                fields=["actor", "-created_at"],
+                name="fa_actor_created_idx",
+            ),
+            models.Index(
+                fields=["action", "-created_at"],
+                name="fa_action_created_idx",
+            ),
+            models.Index(
+                fields=["invitation", "-created_at"],
+                name="fa_inv_created_idx",
+            ),
+            models.Index(
+                fields=["patient", "-created_at"],
+                name="fa_patient_created_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.family} - "
+            f"{self.action} - "
+            f"{self.created_at}"
+        )
+

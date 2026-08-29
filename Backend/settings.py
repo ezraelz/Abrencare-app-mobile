@@ -209,7 +209,48 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_RATES": {
+        "invitation_lookup": "30/minute",
+        "invitation_contact": "5/minute",
+        "invitation_otp": "10/minute",
+        "invitation_registration": "5/hour",
+        "patient_claim": "5/hour",
+
+        "family_invitation_create": "20/hour",
+        "family_patient_create": "20/hour",
+    },
 }
+
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": (
+            "django.contrib.auth."
+            "password_validation.UserAttributeSimilarityValidator"
+        ),
+    },
+    {
+        "NAME": (
+            "django.contrib.auth."
+            "password_validation.MinimumLengthValidator"
+        ),
+        "OPTIONS": {
+            "min_length": 12,
+        },
+    },
+    {
+        "NAME": (
+            "django.contrib.auth."
+            "password_validation.CommonPasswordValidator"
+        ),
+    },
+    {
+        "NAME": (
+            "django.contrib.auth."
+            "password_validation.NumericPasswordValidator"
+        ),
+    },
+]
 
 # ======================================================
 # JWT READY (UNCOMMENT WHEN NEEDED)

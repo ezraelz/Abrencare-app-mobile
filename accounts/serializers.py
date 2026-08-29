@@ -48,6 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phone_number",
             "date_of_birth",
             "date_joined",
+            "account_status",
         ]
         read_only_fields = ["id"]
 
