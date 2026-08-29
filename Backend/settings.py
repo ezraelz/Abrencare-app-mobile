@@ -63,9 +63,6 @@ INSTALLED_APPS = [
     "doctors",
     "notifications",
     "patients",
-    "payments",
-    "reviews",
-    "ai",
     "chat",
 ]
 
