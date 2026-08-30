@@ -5,3 +5,5 @@ Backend/
 __pycache__/
 /migrations
 migrations/
+.gitignore
+db.sqlite3
