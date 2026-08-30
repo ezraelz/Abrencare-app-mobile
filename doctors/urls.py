@@ -45,26 +45,26 @@ urlpatterns = [
     # ======================================================
 
     path(
-        "doctors/",
+        "",
         DoctorListCreateView.as_view(),
         name="doctor-list-create",
     ),
 
     # IMPORTANT: "me" before <int:pk>
     path(
-        "doctors/me/",
+        "me/",
         DoctorMeView.as_view(),
         name="doctor-me",
     ),
 
     path(
-        "doctors/me/deactivate/",
+        "me/deactivate/",
         DoctorDeactivateAccountView.as_view(),
         name="doctor-deactivate-account",
     ),
 
     path(
-        "doctors/<int:pk>/",
+        "<int:pk>/",
         DoctorDetailView.as_view(),
         name="doctor-detail",
     ),
@@ -75,19 +75,19 @@ urlpatterns = [
     # ======================================================
 
     path(
-        "doctors/<int:pk>/approve/",
+        "<int:pk>/approve/",
         DoctorApproveView.as_view(),
         name="doctor-approve",
     ),
 
     path(
-        "doctors/<int:pk>/reject/",
+        "<int:pk>/reject/",
         DoctorRejectView.as_view(),
         name="doctor-reject",
     ),
 
     path(
-        "doctors/<int:pk>/suspend/",
+        "<int:pk>/suspend/",
         DoctorSuspendView.as_view(),
         name="doctor-suspend",
     ),
@@ -98,13 +98,13 @@ urlpatterns = [
     # ======================================================
 
     path(
-        "doctors/<int:doctor_id>/qualifications/",
+        "<int:doctor_id>/qualifications/",
         QualificationListCreateView.as_view(),
         name="doctor-qualification-list-create",
     ),
 
     path(
-        "doctors/<int:doctor_id>/qualifications/<int:pk>/",
+        "<int:doctor_id>/qualifications/<int:pk>/",
         QualificationDetailView.as_view(),
         name="doctor-qualification-detail",
     ),
@@ -115,13 +115,13 @@ urlpatterns = [
     # ======================================================
 
     path(
-        "doctors/<int:doctor_id>/availability/",
+        "<int:doctor_id>/availability/",
         DoctorAvailabilityListCreateView.as_view(),
         name="doctor-availability-list-create",
     ),
 
     path(
-        "doctors/<int:doctor_id>/availability/<int:pk>/",
+        "<int:doctor_id>/availability/<int:pk>/",
         DoctorAvailabilityDetailView.as_view(),
         name="doctor-availability-detail",
     ),

@@ -290,7 +290,6 @@ class DoctorListSerializer(serializers.ModelSerializer):
             "consultation_fee",
             "consultation_duration",
             "bio",
-            "verified",
             "created_at",
             "updated_at",
         ]
@@ -338,7 +337,6 @@ class DoctorDetailSerializer(
             "consultation_fee",
             "consultation_duration",
             "bio",
-            "verified",
             "qualifications",
             "availability",
             "created_at",
@@ -348,7 +346,6 @@ class DoctorDetailSerializer(
         read_only_fields = [
             "id",
             "user",
-            "verified",
             "qualifications",
             "availability",
             "created_at",

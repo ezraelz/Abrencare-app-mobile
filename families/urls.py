@@ -31,13 +31,13 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/",
+        "",
         FamilyListCreateView.as_view(),
         name="family-list-create",
     ),
 
     path(
-        "families/<int:family_id>/",
+        "<int:family_id>/",
         FamilyDetailView.as_view(),
         name="family-detail",
     ),
@@ -48,7 +48,7 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/<int:family_id>/members/",
+        "<int:family_id>/members/",
         FamilyMemberListView.as_view(),
         name="family-member-list",
     ),
@@ -59,19 +59,19 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/<int:family_id>/patients/",
+        "<int:family_id>/patients/",
         FamilyPatientListView.as_view(),
         name="family-patient-list",
     ),
 
     path(
-        "families/<int:family_id>/patients/create/",
+        "<int:family_id>/patients/create/",
         FamilyPatientCreateView.as_view(),
         name="family-patient-create",
     ),
 
     path(
-        "families/<int:family_id>/patients/<int:patient_id>/",
+        "<int:family_id>/patients/<int:patient_id>/",
         FamilyPatientDetailView.as_view(),
         name="family-patient-detail",
     ),
@@ -82,7 +82,7 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/<int:family_id>/invitations/members/",
+        "<int:family_id>/invitations/members/",
         FamilyMemberInvitationCreateView.as_view(),
         name="family-member-invitation-create",
     ),
@@ -93,7 +93,7 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/<int:family_id>/patients/"
+        "<int:family_id>/patients/"
         "<int:patient_id>/claim-invitation/",
         PatientClaimInvitationCreateView.as_view(),
         name="patient-claim-invitation-create",
@@ -146,7 +146,7 @@ urlpatterns = [
     # ========================================================
 
     path(
-        "families/<int:family_id>/invitations/"
+        "<int:family_id>/invitations/"
         "<int:invitation_id>/deliveries/",
         InvitationDeliveryListView.as_view(),
         name="invitation-delivery-list",

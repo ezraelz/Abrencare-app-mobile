@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    PatientsView,
     PatientMeView,
     PatientDetailView,
     PatientDeactivateAccountView,
@@ -100,5 +101,15 @@ urlpatterns = [
         "me/medical-documents/<int:pk>/replace/",
         PatientMedicalDocumentReplaceView.as_view(),
         name="patient-medical-document-replace",
+    ),
+
+    # ==================================================
+    # ALL PATIENTS ADMIN VIEW
+    # ==================================================
+
+    path(
+        "",
+        PatientsView.as_view(),
+        name="patient-me",
     ),
 ]
