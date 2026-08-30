@@ -1,16 +1,33 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 from .views import (
-    FeatureViewSet,
-    ServiceViewSet,
+    FeatureDetailAPIView,
+    FeatureListCreateAPIView,
+    FeatureRestoreAPIView,
+    ServiceDetailAPIView,
+    ServiceListCreateAPIView,
+    ServiceReorderFeaturesAPIView,
+    ServiceRestoreAPIView,
 )
 
-router = DefaultRouter()
-
-router.register("features", FeatureViewSet)
-router.register("services", ServiceViewSet)
-
 urlpatterns = [
-    path("", include(router.urls)),
+    path("features/", FeatureListCreateAPIView.as_view(), name="feature-list"),
+    path("features/<int:pk>/", FeatureDetailAPIView.as_view(), name="feature-detail"),
+    path(
+        "features/<int:pk>/restore/",
+        FeatureRestoreAPIView.as_view(),
+        name="feature-restore",
+    ),
+    path("services/", ServiceListCreateAPIView.as_view(), name="service-list"),
+    path("services/<int:pk>/", ServiceDetailAPIView.as_view(), name="service-detail"),
+    path(
+        "services/<int:pk>/restore/",
+        ServiceRestoreAPIView.as_view(),
+        name="service-restore",
+    ),
+    path(
+        "services/<int:pk>/reorder-features/",
+        ServiceReorderFeaturesAPIView.as_view(),
+        name="service-reorder-features",
+    ),
 ]
