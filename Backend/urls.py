@@ -26,7 +26,9 @@ urlpatterns = [
     path('api/appointments/', include('appointments.urls')),
     path('api/doctors/', include('doctors.urls')),
     path("api/chat/", include("chat.urls")),
-    path("api/families/",include("families.urls"))
+    path("api/families/",include("families.urls")),
+    path("api/consultations/",include("consultations.urls"))
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,16 +1,22 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 from .views import (
-    ConsultationViewSet,
-    PrescriptionViewSet,
+    ConsultationBookingView,
+    ConsultationCancelView,
+    ConsultationCompleteView,
+    ConsultationDetailView,
+    ConsultationStartView,
+    MyConsultationsView,
+    PrescriptionCreateView,
 )
 
-router = DefaultRouter()
-
-router.register("consultations", ConsultationViewSet)
-router.register("prescriptions", PrescriptionViewSet)
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("", ConsultationBookingView.as_view(), name="book"),
+    path("mine/", MyConsultationsView.as_view(), name="my-consultations"),
+    path("<int:pk>/", ConsultationDetailView.as_view(), name="detail"),
+    path("<int:pk>/cancel/", ConsultationCancelView.as_view(), name="cancel"),
+    path("<int:pk>/start/", ConsultationStartView.as_view(), name="start"),
+    path("<int:pk>/complete/", ConsultationCompleteView.as_view(), name="complete"),
+    path("<int:pk>/prescriptions/", PrescriptionCreateView.as_view(), name="prescription-create"),
 ]
