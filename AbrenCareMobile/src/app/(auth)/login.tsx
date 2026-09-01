@@ -32,6 +32,10 @@ export default function LoginScreen() {
 
   const canSubmit = email.trim().length > 0 && password.length > 0;
 
+  const continueLabel = redirect?.includes("executive")
+    ? t.auth.continueToExecutive
+    : t.auth.continueToFamily;
+
   function handleLogin() {
     if (!canSubmit) {
       return;
@@ -136,7 +140,7 @@ export default function LoginScreen() {
               disabled={!canSubmit}
             >
               <Text style={styles.buttonText}>
-                {redirect ? t.auth.continueToFamily : t.auth.signIn}
+                {redirect ? continueLabel : t.auth.signIn}
               </Text>
             </Pressable>
 

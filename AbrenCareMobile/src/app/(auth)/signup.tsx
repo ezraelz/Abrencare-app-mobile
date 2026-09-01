@@ -34,6 +34,10 @@ export default function SignupScreen() {
   const canSubmit =
     name.trim().length > 0 && email.trim().length > 0 && password.length >= 6;
 
+  const continueLabel = redirect?.includes("executive")
+    ? t.auth.continueToExecutive
+    : t.auth.continueToFamily;
+
   function handleSignup() {
     if (!canSubmit) {
       return;
@@ -162,7 +166,7 @@ export default function SignupScreen() {
               disabled={!canSubmit}
             >
               <Text style={styles.buttonText}>
-                {redirect ? t.auth.continueToFamily : t.auth.signUp}
+                {redirect ? continueLabel : t.auth.signUp}
               </Text>
             </Pressable>
 

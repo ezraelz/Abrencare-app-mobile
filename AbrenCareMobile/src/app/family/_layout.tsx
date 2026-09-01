@@ -13,7 +13,7 @@ export default function FamilyLayout() {
   const { isSignedIn } = useAuth();
 
   if (!isSignedIn) {
-    return <ServiceAuthGate redirectTo="/family" />;
+    return <ServiceAuthGate variant="family" redirectTo="/family" />;
   }
 
   return (
