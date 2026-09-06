@@ -110,9 +110,7 @@ User
  └── Permissions
 
 Healthcare modules then associate their domain entities with the authenticated user.
-
 ---
-
 # 2. Patient
 
 A patient represents the healthcare identity of a person receiving healthcare services.
