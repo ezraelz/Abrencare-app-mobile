@@ -1,270 +1,428 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  Alert,
+  SafeAreaView,
   ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+
+import { initialsFor, useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 
+const BLUE = "#6F89B9";
+
 export default function ConsultationProfile() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
+  const router = useRouter();
+  const { user, isSignedIn, signOut } = useAuth();
+
+  const [notifications, setNotifications] = useState(true);
+
+  const name = user?.name ?? t.profile.guest;
+  const email = user?.email ?? t.profile.notSignedIn;
+
+  function toggleLanguage() {
+    setLanguage(language === "en" ? "am" : "en");
+  }
+
+  function handleLogOut() {
+    Alert.alert(t.profile.logOutTitle, t.profile.logOutMessage, [
+      { text: t.profile.logOutCancel, style: "cancel" },
+      {
+        text: t.profile.logOut,
+        style: "destructive",
+        onPress: () => {
+          signOut();
+          router.replace("/(tabs)");
+        },
+      },
+    ]);
+  }
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <TouchableOpacity style={styles.backButton}>
-        <Ionicons name="chevron-back" size={22} color="#4A5568" />
-      </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <Text style={styles.headerLabel}>{t.profile.account}</Text>
+        <Text style={styles.headerTitle}>{t.profile.title}</Text>
+      </View>
 
-      <Text style={styles.smallTitle}>{t.profile.account}</Text>
-      <Text style={styles.title}>{t.profile.title}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.identityCard}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {isSignedIn ? initialsFor(user) : "?"}
+            </Text>
+          </View>
 
-      {/* User Card */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>AT</Text>
+          <View style={styles.identityInfo}>
+            <Text style={styles.identityName}>{name}</Text>
+            <Text style={styles.identityEmail}>{email}</Text>
+          </View>
+
+          {!isSignedIn && (
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={() => router.push("/(auth)/login")}
+            >
+              <Text style={styles.signInText}>{t.profile.signIn}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        <Text style={styles.name}>Ato Tadesse</Text>
+        <Text style={styles.sectionLabel}>{t.profile.yourInformation}</Text>
 
-        <Text style={styles.subtitle}>
-          {t.profile.member}
+        <View style={styles.card}>
+          <InfoRow
+            icon="person-outline"
+            label={t.profile.nameLabel}
+            value={name}
+            divider
+          />
+
+          <InfoRow
+            icon="call-outline"
+            label={t.profile.phone}
+            value="+251 91 234 5678"
+            divider
+          />
+
+          <InfoRow
+            icon="mail-outline"
+            label={t.profile.emailLabel}
+            value={email}
+          />
+        </View>
+
+        <Text style={styles.sectionLabel}>
+          {t.profile.consultationSettings}
         </Text>
 
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{t.profile.activePlan}</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={[styles.settingRow, styles.divider]}
+            onPress={toggleLanguage}
+          >
+            <View style={styles.settingIcon}>
+              <Ionicons name="language-outline" size={18} color={BLUE} />
+            </View>
+
+            <Text style={styles.settingLabel}>{t.profile.languageLabel}</Text>
+
+            <Text style={styles.settingValue}>
+              {language === "en"
+                ? t.profile.languageEnglish
+                : t.profile.languageAmharic}
+            </Text>
+
+            <Ionicons name="swap-horizontal" size={17} color="#C7CCD2" />
+          </TouchableOpacity>
+
+          <View style={[styles.settingRow, styles.divider]}>
+            <View style={styles.settingIcon}>
+              <Ionicons
+                name="notifications-outline"
+                size={18}
+                color={BLUE}
+              />
+            </View>
+
+            <Text style={styles.settingLabel}>
+              {t.profile.notificationsLabel}
+            </Text>
+
+            <Text style={styles.settingValue}>
+              {notifications
+                ? t.profile.notificationsOn
+                : t.profile.notificationsOff}
+            </Text>
+
+            <Switch
+              value={notifications}
+              onValueChange={setNotifications}
+              trackColor={{ false: "#E2E0DB", true: "#B7C6DC" }}
+              thumbColor={notifications ? BLUE : "#FFFFFF"}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.settingRow}
+            onPress={() =>
+              Alert.alert(
+                t.profile.videoSettings,
+                t.profile.videoSettingsMessage,
+                [{ text: t.profile.ok }],
+              )
+            }
+          >
+            <View style={styles.settingIcon}>
+              <Ionicons name="videocam-outline" size={18} color={BLUE} />
+            </View>
+
+            <Text style={styles.settingLabel}>{t.profile.videoSettings}</Text>
+
+            <Ionicons name="chevron-forward" size={17} color="#C7CCD2" />
+          </TouchableOpacity>
         </View>
+
+        <Text style={styles.sectionLabel}>{t.profile.accountSection}</Text>
+
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={[styles.settingRow, styles.divider]}
+            onPress={() =>
+              Alert.alert(t.profile.privacy, t.profile.privacyMessage, [
+                { text: t.profile.ok },
+              ])
+            }
+          >
+            <View style={styles.settingIcon}>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={18}
+                color={BLUE}
+              />
+            </View>
+
+            <Text style={styles.settingLabel}>{t.profile.privacy}</Text>
+
+            <Ionicons name="chevron-forward" size={17} color="#C7CCD2" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.settingRow, isSignedIn && styles.divider]}
+            onPress={() =>
+              Alert.alert(t.profile.helpSupport, t.profile.helpMessage, [
+                { text: t.profile.ok },
+              ])
+            }
+          >
+            <View style={styles.settingIcon}>
+              <Ionicons name="help-circle-outline" size={18} color={BLUE} />
+            </View>
+
+            <Text style={styles.settingLabel}>{t.profile.helpSupport}</Text>
+
+            <Ionicons name="chevron-forward" size={17} color="#C7CCD2" />
+          </TouchableOpacity>
+
+          {isSignedIn && (
+            <TouchableOpacity style={styles.settingRow} onPress={handleLogOut}>
+              <View style={[styles.settingIcon, styles.logOutIcon]}>
+                <Ionicons name="log-out-outline" size={18} color="#C4626A" />
+              </View>
+
+              <Text style={[styles.settingLabel, styles.logOutLabel]}>
+                {t.profile.logOut}
+              </Text>
+
+              <Ionicons name="chevron-forward" size={17} color="#E0BFC2" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={{ height: 28 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  divider,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  divider?: boolean;
+}) {
+  return (
+    <View style={[styles.infoRow, divider && styles.divider]}>
+      <View style={styles.settingIcon}>
+        <Ionicons name={icon} size={18} color={BLUE} />
       </View>
 
-      {/* Personal Information */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t.profile.personalInformation}</Text>
-
-        <View style={styles.row}>
-          <Ionicons name="person-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.fullName}</Text>
-            <Text style={styles.value}>Ato Tadesse</Text>
-          </View>
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="calendar-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.age}</Text>
-            <Text style={styles.value}>{t.profile.ageValue}</Text>
-          </View>
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="location-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.address}</Text>
-            <Text style={styles.value}>{t.profile.addressValue}</Text>
-          </View>
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="call-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.phone}</Text>
-            <Text style={styles.value}>+251 91 234 5678</Text>
-          </View>
-        </View>
+      <View style={styles.infoText}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
       </View>
-
-      {/* Emergency Contact */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t.profile.emergencyContact}</Text>
-
-        <View style={styles.row}>
-          <Ionicons name="people-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.coordinator}</Text>
-            <Text style={styles.value}>Marta Tesfaye</Text>
-          </View>
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.row}>
-          <Ionicons name="medkit-outline" size={20} color="#8AA07D" />
-          <View style={styles.info}>
-            <Text style={styles.label}>{t.profile.assignedNurse}</Text>
-            <Text style={styles.value}>Meron Girma</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Buttons */}
-      <TouchableOpacity style={styles.primaryButton}>
-        <Text style={styles.primaryText}>{t.profile.editProfile}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.secondaryButton}>
-        <Text style={styles.secondaryText}>{t.profile.manageAccount}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#F7F4EF",
-    padding: 18,
+    backgroundColor: "#FAF9F6",
   },
 
-  backButton: {
-    marginBottom: 8,
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
 
-  smallTitle: {
+  headerLabel: {
     fontSize: 10,
-    color: "#8C9487",
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-
-  title: {
-    fontSize: 30,
+    letterSpacing: 1.3,
+    color: BLUE,
     fontWeight: "700",
-    color: "#27352A",
-    marginBottom: 18,
+    marginBottom: 3,
   },
 
-  profileCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+  headerTitle: {
+    fontSize: 22,
+    color: "#172B42",
+    fontWeight: "700",
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+
+  identityCard: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: 22,
-    marginBottom: 18,
+    gap: 13,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 22,
   },
 
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 18,
-    backgroundColor: "#222",
-    justifyContent: "center",
+    width: 52,
+    height: 52,
+    borderRadius: 15,
+    backgroundColor: "#EAF0F7",
     alignItems: "center",
+    justifyContent: "center",
   },
 
   avatarText: {
-    color: "#9BE38C",
+    fontSize: 17,
     fontWeight: "700",
-    fontSize: 22,
+    color: BLUE,
   },
 
-  name: {
-    marginTop: 14,
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#27352A",
-  },
-
-  subtitle: {
-    color: "#8A8A8A",
-    marginTop: 4,
-  },
-
-  statusBadge: {
-    marginTop: 14,
-    backgroundColor: "#EAF4E8",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-
-  statusText: {
-    color: "#5D9C59",
-    fontWeight: "600",
-    fontSize: 12,
-  },
-
-  section: {
-    backgroundColor: "#FFF",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 18,
-  },
-
-  sectionTitle: {
-    fontSize: 11,
-    color: "#9B9B9B",
-    letterSpacing: 1,
-    marginBottom: 15,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-
-  info: {
-    marginLeft: 14,
+  identityInfo: {
     flex: 1,
   },
 
-  label: {
-    fontSize: 11,
-    color: "#9B9B9B",
-  },
-
-  value: {
-    marginTop: 3,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#27352A",
-  },
-
-  separator: {
-    height: 1,
-    backgroundColor: "#EEEEEE",
-  },
-
-  primaryButton: {
-    backgroundColor: "#8FA585",
-    height: 54,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  primaryText: {
-    color: "#FFF",
+  identityName: {
+    fontSize: 17,
     fontWeight: "700",
-    fontSize: 16,
+    color: "#172B42",
   },
 
-  secondaryButton: {
-    backgroundColor: "#FFF",
-    height: 54,
+  identityEmail: {
+    fontSize: 12,
+    color: "#8D9297",
+    marginTop: 3,
+  },
+
+  signInButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: BLUE,
+  },
+
+  signInText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  sectionLabel: {
+    fontSize: 10,
+    letterSpacing: 1.3,
+    color: "#8A929B",
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+
+  card: {
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#D8D8D8",
-    marginBottom: 30,
+    paddingHorizontal: 15,
+    marginBottom: 22,
   },
 
-  secondaryText: {
-    color: "#27352A",
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1EFEB",
+  },
+
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 13,
+  },
+
+  infoText: {
+    flex: 1,
+  },
+
+  infoLabel: {
+    fontSize: 11,
+    color: "#98A0A8",
+  },
+
+  infoValue: {
+    fontSize: 14,
     fontWeight: "600",
-    fontSize: 15,
+    color: "#172B42",
+    marginTop: 3,
+  },
+
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+  },
+
+  settingIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: "#F4F7FB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  settingLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#26394C",
+  },
+
+  settingValue: {
+    fontSize: 13,
+    color: "#8D9297",
+    marginRight: 4,
+  },
+
+  logOutIcon: {
+    backgroundColor: "#FCEFEF",
+  },
+
+  logOutLabel: {
+    color: "#C4626A",
   },
 });

@@ -1,10 +1,14 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+
+import { loadJson, saveJson } from '@/lib/storage';
 
 const STORAGE_KEY = 'abrencare-appointments';
 
@@ -89,41 +93,36 @@ function seedAppointments(): Appointment[] {
   ];
 }
 
-function readStoredAppointments(): Appointment[] {
-  try {
-    const storage = (globalThis as { localStorage?: Storage }).localStorage;
-    const raw = storage?.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Appointment[];
-      if (Array.isArray(parsed)) {
-        return sortAppointments(parsed);
-      }
-    }
-  } catch {
-    // Ignore storage access errors (native, private mode).
-  }
-  return sortAppointments(seedAppointments());
-}
-
-function persistAppointments(appointments: Appointment[]) {
-  try {
-    const storage = (globalThis as { localStorage?: Storage }).localStorage;
-    storage?.setItem(STORAGE_KEY, JSON.stringify(appointments));
-  } catch {
-    // Ignore storage write errors.
-  }
-}
-
 export function AppointmentsProvider({ children }: { children: ReactNode }) {
-  const [appointments, setAppointments] = useState<Appointment[]>(
-    readStoredAppointments,
+  const [appointments, setAppointments] = useState<Appointment[]>(() =>
+    sortAppointments(seedAppointments()),
   );
+
+  // Set once the user edits, so a slow read can never resurrect what they
+  // just cancelled.
+  const edited = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+
+    loadJson<Appointment[]>(STORAGE_KEY).then((stored) => {
+      if (!active || edited.current || !Array.isArray(stored)) {
+        return;
+      }
+      setAppointments(sortAppointments(stored));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const value = useMemo<AppointmentsContextValue>(() => {
     function commit(next: Appointment[]) {
       const sorted = sortAppointments(next);
+      edited.current = true;
       setAppointments(sorted);
-      persistAppointments(sorted);
+      saveJson(STORAGE_KEY, sorted);
       return sorted;
     }
 
