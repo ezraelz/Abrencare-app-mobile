@@ -99,10 +99,12 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
      "http://127.0.0.1:8000",
+     "http://localhost:8081",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
      "http://127.0.0.1:8000",
+     "http://localhost:8081"
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -154,12 +156,45 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Backend.wsgi.application'
 ASGI_APPLICATION = 'Backend.asgi.application'
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+try:
+    import redis
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, socket_connect_timeout=1)
+    redis_client.ping()
+    REDIS_AVAILABLE = True
+except:
+    REDIS_AVAILABLE = False
+
+if REDIS_AVAILABLE:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",
+        }
     }
-}
+    
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [("127.0.0.1", 6379)],
+            },
+        },
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+    
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+    
+    print("WARNING: Redis not available. Using in-memory cache.")
 
 CHANNEL_LAYERS = {
     "default": {
@@ -207,7 +242,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
+        "login": "10/minute",  # 
+        "registration": "5/hour",  # 
         "invitation_lookup": "30/minute",
         "invitation_contact": "5/minute",
         "invitation_otp": "10/minute",

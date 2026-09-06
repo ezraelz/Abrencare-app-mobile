@@ -84,25 +84,13 @@ def get_pending_invitation(token):
 
 class FamilyListCreateView(APIView):
     """
-    GET:
-        Return families where the authenticated user is a member.
-
-    POST:
-        Create a new family and automatically make the creator
-        its owner.
+    GET: Return families where the authenticated user is a member.
+    POST: Create a new family and automatically make the creator its owner.
     """
-
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = [IsAuthenticated,]
 
     def get(self, request):
-        families = (
-            Family.objects
-            .filter(
-                members__user=request.user,
-            )
-            .distinct()
+        families = (Family.objects.filter(members__user=request.user,).distinct()
             .prefetch_related(
                 "members",
                 "patients",
@@ -142,7 +130,6 @@ class FamilyListCreateView(APIView):
 class FamilyDetailView(APIView):
     """
     Retrieve or update a family.
-
     Only an existing family member can access the family.
     """
 
@@ -190,7 +177,6 @@ class FamilyDetailView(APIView):
 class FamilyMemberListView(APIView):
     """
     List all members of a family.
-
     Membership authorization is handled by IsFamilyMember.
     """
 

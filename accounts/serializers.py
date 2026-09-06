@@ -25,10 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
     profile_picture_url = serializers.ReadOnlyField()
     role = RoleSerializer(read_only=True)
 
-    personal_information = serializers.ReadOnlyField()
-    medical_information = serializers.ReadOnlyField()
-    emergency_contact = serializers.ReadOnlyField()
-
     class Meta:
         model = User
         fields = [

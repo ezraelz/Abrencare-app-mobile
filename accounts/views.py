@@ -939,11 +939,9 @@ class ResetPasswordView(
             status=status.HTTP_200_OK,
         )
 
-
 # ============================================================
 # ACCOUNT DEACTIVATION
 # ============================================================
-
 
 class DeactivateAccountView(
     SecurityLogMixin,
