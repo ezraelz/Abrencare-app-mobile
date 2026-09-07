@@ -1,18 +1,40 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/auth/AuthContext';
 import ServiceAuthGate from '@/components/ServiceAuthGate';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useFamilyService } from '@/hooks/use-family-service';
+import { ActivityIndicator, View } from 'react-native';
 
 type TabIconProps = { color: string; size: number; focused: boolean };
 
 export default function FamilyLayout() {
   const { t } = useLanguage();
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
+  const { 
+    familyServices, 
+    fetchFamilyServices,
+    isLoading, 
+    error 
+  } = useFamilyService();
 
-  if (!isSignedIn) {
+  useEffect(()=> {
+    fetchFamilyServices();
+  },[]);
+
+  // ✅ Show loading state while checking
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#2F80ED" />
+      </View>
+    );
+  }
+
+  // ✅ Now check if user has services
+  if (!familyServices || familyServices.length === 0) {
     return <ServiceAuthGate variant="family" redirectTo="/family" />;
   }
 

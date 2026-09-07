@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -13,27 +13,32 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { useConsultations } from "@/consultation/ConsultationContext";
-import {
-  SPECIALTIES,
-  doctorById,
-  filterDoctors,
-  mondayFirstWeekdays,
-  monthGridMondayFirst,
-  specialtyLabel,
-  type SpecialtyId,
-} from "@/consultation/doctors";
+
+
 import { monthTitle } from "@/consultation/format";
 import { fromDateKey, toDateKey } from "@/family/AppointmentsContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { monthGridMondayFirst, useDoctor } from "@/hooks/use-doctor";
+import { Specialty } from "@/types/doctorTypes";
+import { mondayFirstWeekdays, SpecialtyId } from "@/consultation/doctors";
 
 const BLUE = "#6F89B9";
 
 export default function ConsultationBooking() {
   const { t } = useLanguage();
   const router = useRouter();
+  const { 
+    specialities, 
+    specialty, 
+    doctors: allDoctors, 
+    fetchDoctorSpecialities, 
+    doctorById,
+    fetchDoctors,
+    filterDoctors,
+    fetchDoctorAvailability 
+    } = useDoctor();
   const { draft, setDraft, book, isSlotTaken } = useConsultations();
-
-  const [specialty, setSpecialty] = useState<SpecialtyId | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
   const [query, setQuery] = useState("");
   const [time, setTime] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -48,10 +53,17 @@ export default function ConsultationBooking() {
     return { year: start.getFullYear(), month: start.getMonth() };
   });
 
+  useEffect(() => {
+    fetchDoctors();
+    fetchDoctorSpecialities();
+  }, []);
+
   const doctors = useMemo(
-    () => filterDoctors({ query, specialty }, t),
-    [query, specialty, t],
+    () => filterDoctors({ query, specialty: selectedSpecialty }),
+    [query, selectedSpecialty, allDoctors],
   );
+
+  console.log('filtered doctors:', doctors.length, doctors[0]?.specialty);
 
   const doctor = doctorById(draft.doctorId);
 
@@ -62,7 +74,7 @@ export default function ConsultationBooking() {
 
     // Hide times that have already passed when booking for today.
     if (selectedDate !== todayKey) {
-      return doctor.slots;
+      return doctor?.slots;
     }
 
     return doctor.slots.filter((slot) => {
@@ -79,8 +91,8 @@ export default function ConsultationBooking() {
 
   const canBook = Boolean(doctor && selectedDate && time);
 
-  function pickSpecialty(next: SpecialtyId | null) {
-    setSpecialty(next);
+  function pickSpecialty(next: Specialty | null) {
+    setSelectedSpecialty(next);
     setConfirmed(false);
 
     // Drop the chosen doctor if they fall outside the new filter.
@@ -91,9 +103,12 @@ export default function ConsultationBooking() {
   }
 
   function pickDoctor(id: string) {
-    setDraft({ doctorId: draft.doctorId === id ? null : id });
+    setDraft({ doctorId: String(draft.doctorId) === id ? null : id });
     setTime(null);
     setConfirmed(false);
+    if (String(draft.doctorId) !== id) {
+      fetchDoctorAvailability(Number(id));
+    }
   }
 
   function pickDate(day: number) {
@@ -114,7 +129,7 @@ export default function ConsultationBooking() {
       return;
     }
 
-    book(doctor.id, selectedDate, time);
+    book(String(doctor.id), selectedDate, time);
     setTime(null);
     setConfirmed(true);
   }
@@ -173,16 +188,16 @@ export default function ConsultationBooking() {
         <View style={styles.chipWrap}>
           <FilterChip
             label={t.consultation.allSpecialties}
-            selected={specialty === null}
+            selected={selectedSpecialty === null}
             onPress={() => pickSpecialty(null)}
           />
 
-          {SPECIALTIES.map((id) => (
+          {specialities.map((spciality) => (
             <FilterChip
-              key={id}
-              label={specialtyLabel(id, t)}
-              selected={specialty === id}
-              onPress={() => pickSpecialty(specialty === id ? null : id)}
+              key={spciality.id}
+              label={spciality.name}
+              selected={selectedSpecialty?.id === spciality.id}
+              onPress={() => pickSpecialty(selectedSpecialty?.id === spciality.id ? null : spciality)}
             />
           ))}
         </View>
@@ -200,7 +215,7 @@ export default function ConsultationBooking() {
         ) : (
           <View style={styles.card}>
             {doctors.map((item, index) => {
-              const selected = draft.doctorId === item.id;
+              const selected = String(draft.doctorId) === String(item.id);
 
               return (
                 <TouchableOpacity
@@ -209,7 +224,7 @@ export default function ConsultationBooking() {
                     styles.doctorRow,
                     index !== doctors.length - 1 && styles.divider,
                   ]}
-                  onPress={() => pickDoctor(item.id)}
+                  onPress={() => pickDoctor(String(item.id))}
                 >
                   <View
                     style={[styles.avatar, selected && styles.avatarSelected]}
@@ -220,14 +235,14 @@ export default function ConsultationBooking() {
                         selected && styles.avatarTextSelected,
                       ]}
                     >
-                      {item.initials}
+                      {item.full_name.charAt(0).toLocaleUpperCase()}
                     </Text>
                   </View>
 
                   <View style={styles.doctorInfo}>
-                    <Text style={styles.doctorName}>{item.name}</Text>
+                    <Text style={styles.doctorName}>{item.full_name}</Text>
                     <Text style={styles.doctorSpecialty}>
-                      {specialtyLabel(item.specialty, t)}
+                      {item.specialty_name}
                     </Text>
                   </View>
 
@@ -236,13 +251,13 @@ export default function ConsultationBooking() {
                       style={[
                         styles.statusDot,
                         {
-                          backgroundColor: item.online ? "#5A9964" : "#C9CDD2",
+                          backgroundColor: item.is_online ? "#5A9964" : "#C9CDD2",
                         },
                       ]}
                     />
 
                     <Text style={styles.statusText}>
-                      {item.online
+                      {item.is_online
                         ? t.consultation.online
                         : t.consultation.busy}
                     </Text>
@@ -269,14 +284,14 @@ export default function ConsultationBooking() {
               <View style={styles.consultTop}>
                 <View style={[styles.avatar, styles.avatarSelected]}>
                   <Text style={[styles.avatarText, styles.avatarTextSelected]}>
-                    {doctor.initials}
+                    {doctor.full_name.charAt(0)}
                   </Text>
                 </View>
 
                 <View style={styles.doctorInfo}>
-                  <Text style={styles.doctorName}>{doctor.name}</Text>
+                  <Text style={styles.doctorName}>{doctor.full_name}</Text>
                   <Text style={styles.doctorSpecialty}>
-                    {specialtyLabel(doctor.specialty, t)}
+                    {doctor.specialty_name}
                   </Text>
                 </View>
 
@@ -285,12 +300,12 @@ export default function ConsultationBooking() {
                     style={[
                       styles.statusDot,
                       {
-                        backgroundColor: doctor.online ? "#5A9964" : "#C9CDD2",
+                        backgroundColor: doctor.is_online ? "#5A9964" : "#C9CDD2",
                       },
                     ]}
                   />
                   <Text style={styles.statusText}>
-                    {doctor.online
+                    {doctor.is_online
                       ? t.consultation.online
                       : t.consultation.busy}
                   </Text>
@@ -369,7 +384,7 @@ export default function ConsultationBooking() {
           </View>
 
           <View style={styles.weekRow}>
-            {weekdays.map((label) => (
+            {weekdays.map((label: any) => (
               <Text key={label} style={styles.weekday}>
                 {label}
               </Text>
@@ -377,12 +392,12 @@ export default function ConsultationBooking() {
           </View>
 
           <View style={styles.dayGrid}>
-            {cells.map((day, index) => {
+            {cells.map((day, index: number) => {
               if (day === null) {
                 return <View key={`blank-${index}`} style={styles.dayCell} />;
               }
 
-              const key = toDateKey(new Date(view.year, view.month, day));
+              const key = toDateKey(new Date(view.year, view.month, Number(day)));
               const isPast = key < todayKey;
               const isSelected = key === selectedDate;
               const isToday = key === todayKey;
@@ -391,7 +406,7 @@ export default function ConsultationBooking() {
                 <TouchableOpacity
                   key={key}
                   style={styles.dayCell}
-                  onPress={() => pickDate(day)}
+                  onPress={() => pickDate(Number(day))}
                   disabled={isPast}
                 >
                   <View
@@ -432,7 +447,7 @@ export default function ConsultationBooking() {
         ) : (
           <View style={styles.chipWrap}>
             {slots.map((slot) => {
-              const taken = isSlotTaken(doctor.id, selectedDate, slot);
+              const taken = isSlotTaken(String(doctor.id), selectedDate, slot);
               const selected = time === slot;
 
               return (

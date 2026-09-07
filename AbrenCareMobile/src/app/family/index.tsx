@@ -22,6 +22,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { useAppointments } from "@/family/AppointmentsContext";
 import { formatDateKey, reminderLabel } from "@/family/format";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useFamilyService } from "@/hooks/use-family-service";
 
 const GREEN = "#6A8D69";
 const CARE_PHONE = "+251912345678";
@@ -38,6 +39,7 @@ export default function FamilyOverview() {
   const { t } = useLanguage();
   const router = useRouter();
   const { user } = useAuth();
+
   const { nextAppointment } = useAppointments();
 
   const pulse = useSharedValue(0);
@@ -58,7 +60,7 @@ export default function FamilyOverview() {
       : hour < 18
         ? t.family.greetingAfternoon
         : t.family.greetingEvening;
-  const firstName = user?.name.split(" ")[0];
+  const firstName = user?.username.split(" ")[0];
 
   async function dial() {
     const url = `tel:${CARE_PHONE}`;
