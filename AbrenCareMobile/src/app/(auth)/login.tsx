@@ -23,7 +23,7 @@ import spacing from "@/theme/spacing";
 export default function LoginScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { signIn } = useAuth();
+  const { login } = useAuth();
   const { redirect } = useLocalSearchParams() as { redirect?: string };
 
   const [email, setEmail] = useState("");
@@ -36,13 +36,17 @@ export default function LoginScreen() {
     ? t.auth.continueToExecutive
     : t.auth.continueToFamily;
 
-  function handleLogin() {
+  const handleLogin = async () => {
     if (!canSubmit) {
       return;
     }
-
-    signIn(email);
-    router.replace(redirect ?? "/(tabs)");
+    try{
+      await login(email, password);
+      router.replace("/(tabs)");
+    }catch(error){
+      console.log("Login failed", error);
+      router.replace("/login");
+    }
   }
 
   return (
