@@ -44,6 +44,7 @@ class DoctorAdmin(admin.ModelAdmin):
         "get_full_name",
         "get_email",
         "specialty",
+        "is_online",
         "license_number",
         "years_of_experience",
         "consultation_fee",

@@ -12,9 +12,7 @@ from .models import (
     DoctorAvailability,
 )
 
-
 User = get_user_model()
-
 
 # ============================================================
 # SPECIALTY
@@ -271,6 +269,8 @@ class DoctorListSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    specialty = SpecialtySerializer()
+
     specialty_name = serializers.CharField(
         source="specialty.name",
         read_only=True,
@@ -337,6 +337,7 @@ class DoctorDetailSerializer(
             "consultation_fee",
             "consultation_duration",
             "bio",
+            "is_online",
             "qualifications",
             "availability",
             "created_at",
@@ -457,6 +458,7 @@ class DoctorUpdateSerializer(
             "consultation_fee",
             "consultation_duration",
             "bio",
+            "is_online",
         ]
 
     def validate_license_number(self, value):

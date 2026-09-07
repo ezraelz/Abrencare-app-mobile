@@ -100,6 +100,8 @@ class Doctor(models.Model):
         related_name="approved_doctors",
     )
 
+    is_online = models.BooleanField(default=False, blank=True, null=True)
+
     created_at = models.DateTimeField(
         auto_now_add=True,
     )

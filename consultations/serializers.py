@@ -109,10 +109,25 @@ class ConsultationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
         fields = [
-            "id", "appointment", "patient_name", "doctor_name", "specialty_name",
-            "appointment_date", "appointment_time", "duration_minutes", "appointment_status",
-            "consultation_type", "language", "status", "price", "currency",
-            "meeting_url", "started_at", "ended_at", "created_at", "updated_at",
+            "id",
+            "appointment",
+            "patient_name",
+            "doctor_name", 
+            "specialty_name",
+            "appointment_date", 
+            "appointment_time", 
+            "duration_minutes", 
+            "appointment_status",
+            "consultation_type", 
+            "language", 
+            "status", 
+            "price", 
+            "currency",
+            "meeting_url", 
+            "started_at", 
+            "ended_at", 
+            "created_at", 
+            "updated_at",
         ]
         read_only_fields = fields
 
