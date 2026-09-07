@@ -209,7 +209,16 @@ export default function FamilyAppointments() {
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={() => handleCancel(appointment.id)}>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleCancel(appointment.id)}
+                    hitSlop={8}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={13}
+                      color="#D64545"
+                    />
                     <Text style={styles.cancelText}>
                       {t.familyAppointments.cancel}
                     </Text>
@@ -578,10 +587,20 @@ const styles = StyleSheet.create({
     color: '#2F855A',
   },
 
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: '#FDECEC',
+  },
+
   cancelText: {
     fontSize: 12,
     color: '#D64545',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   fieldLabel: {
