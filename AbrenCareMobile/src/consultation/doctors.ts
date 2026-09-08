@@ -1,4 +1,5 @@
 import type { en } from '@/i18n/translations';
+import { Specialty } from '@/types/doctorTypes';
 
 type Copy = typeof en;
 
@@ -14,7 +15,7 @@ export type Doctor = {
   id: string;
   name: string;
   initials: string;
-  specialty: SpecialtyId;
+  specialty: Specialty;
   rating: number;
   years: number;
   online: boolean;
@@ -97,7 +98,7 @@ export const DOCTORS: Doctor[] = [
 /** Every consultation runs for the same length. */
 export const CONSULTATION_MINUTES = 30;
 
-export function specialtyLabel(specialty: SpecialtyId, t: Copy) {
+export function specialtyLabel(specialty: Specialty, t: Copy) {
   return t.consultationSpecialties[specialty];
 }
 
@@ -108,7 +109,7 @@ export function doctorById(id: string | null) {
   return DOCTORS.find((doctor) => doctor.id === id) ?? null;
 }
 
-export function doctorsInSpecialty(specialty: SpecialtyId) {
+export function doctorsInSpecialty(specialty: Specialty) {
   return DOCTORS.filter((doctor) => doctor.specialty === specialty);
 }
 

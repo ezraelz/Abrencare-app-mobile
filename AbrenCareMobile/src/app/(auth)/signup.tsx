@@ -23,7 +23,7 @@ import spacing from "@/theme/spacing";
 export default function SignupScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { signUp } = useAuth();
+  const { register } = useAuth();
   const { redirect } = useLocalSearchParams() as { redirect?: string };
 
   const [name, setName] = useState("");
@@ -38,13 +38,13 @@ export default function SignupScreen() {
     ? t.auth.continueToExecutive
     : t.auth.continueToFamily;
 
-  function handleSignup() {
+  const handleSignup = async() => {
     if (!canSubmit) {
       return;
     }
 
-    signUp(name, email);
-    router.replace(redirect ?? "/(tabs)");
+    await register(name, password, email);
+    router.replace(redirect ?? "/login");
   }
 
   return (

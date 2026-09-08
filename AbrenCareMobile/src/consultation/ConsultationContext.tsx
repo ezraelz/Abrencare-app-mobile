@@ -6,7 +6,8 @@ import {
 } from 'react';
 
 import { api } from '@/services/api';
-import { Consultaions } from '@/types/consultationsTypes';
+import { BookConsultations, Consultations } from '@/types/consultationsTypes';
+import { addDays, fromDateKey, toDateKey } from '@/family/AppointmentsContext';
 
 /** What the booking screen is currently building up. */
 export type BookingDraft = {
@@ -15,27 +16,43 @@ export type BookingDraft = {
 };
 
 type ConsultationContextValue = {
-  consultations: Consultaions[];
-  consultation: Consultaions | undefined;
+  consultations: Consultations[];
+  consultation: Consultations | undefined;
   isLoading: boolean;
   errors: string;
 
   draft: BookingDraft;
   setDraft: (patch: Partial<BookingDraft>) => void;
+  upcoming: Consultations[];
+  recent: Consultations[];
+  followUpDate: string | null;
 
   fetchConsultaions: () => Promise<void>;
   fetchConsultaion: (id: number) => Promise<void>;
   createConsultations: () => Promise<void>;
-  book: (doctorId: string, date: string, time: string) => Promise<void>;
+  book: (formData: BookConsultations) => Promise<void>;
   cancelConsultation: (id: number) => Promise<void>;
   isSlotTaken: (doctorId: string, date: string, time: string) => boolean;
 };
 
 const ConsultationContext = createContext<ConsultationContextValue | null>(null);
 
+export function consultationStart(consultation: Consultations) {
+  const [hours, minutes] = consultation.appointment_time.split(':').map(Number);
+  const date = fromDateKey(consultation.appointment_date);
+  date.setHours(hours ?? 0, minutes ?? 0, 0, 0);
+  return date;
+}
+
+export function isJoinable(consultation: Consultations) {
+  const start = consultationStart(consultation).getTime();
+  const now = Date.now();
+  return now >= start - 10 * 60_000 && now <= start + 30 * 60_000;
+}
+
 export function ConsultationProvider({ children }: { children: ReactNode }) {
-  const [consultations, setConsultations] = useState<Consultaions[]>([]);
-  const [consultation, setConsultation] = useState<Consultaions>();
+  const [consultations, setConsultations] = useState<Consultations[]>([]);
+  const [consultation, setConsultation] = useState<Consultations>();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState('');
 
@@ -43,6 +60,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     doctorId: null,
     date: null,
   });
+  
 
   const setDraft = (patch: Partial<BookingDraft>) => {
     setDraftState((current) => ({ ...current, ...patch }));
@@ -89,18 +107,18 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
   // What ConsultationBooking.tsx actually calls: books a specific doctor/date/time
   // and refreshes the list so isSlotTaken/upcoming reflect it immediately.
-  const book = async (doctorId: string, date: string, time: string) => {
+  const book = async (formData: BookConsultations) => {
     setIsLoading(true);
     setErrors('');
     try {
-      const res = await api.post('/api/consultations/', {
-        doctor: doctorId,
-        date,
-        time,
-      });
+      const res = await api.post('/api/consultations/', formData);
       setConsultations((current) => [...current, res.data]);
-    } catch (error) {
-      setErrors(`Faild to create a consultations. ${error}`);
+    } catch (error: any) {
+      const detail = error?.response?.data
+        ? JSON.stringify(error.response.data)
+        : String(error);
+      setErrors(`Failed to create a consultation. ${detail}`);
+      throw error; // rethrow so the caller's catch in handleBook still fires
     } finally {
       setIsLoading(false);
     }
@@ -124,10 +142,30 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
   const isSlotTaken = (doctorId: string, date: string, time: string) =>
     consultations.some(
       (item: any) =>
-        String(item.doctor ?? item.doctorId) === doctorId &&
+        String(item.doctor.id ?? item.doctorId) === doctorId &&
         item.date === date &&
         item.time === time,
     );
+
+  const now = Date.now();
+  const isPast = (consultation: Consultations) =>
+    consultation.status == "completed" || consultationStart(consultation).getTime() < now;
+
+  const upcoming = consultations
+    .filter((consultation) => !isPast(consultation))
+    .sort(
+      (a, b) =>
+        consultationStart(a).getTime() - consultationStart(b).getTime(),
+    );
+
+  const recent = consultations
+    .filter(isPast)
+    .sort(
+      (a, b) =>
+        consultationStart(b).getTime() - consultationStart(a).getTime(),
+    );
+
+  const lastVisit = recent[0];
 
   const value: ConsultationContextValue = {
     consultations,
@@ -140,6 +178,11 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     fetchConsultaion,
     createConsultations,
     book,
+    upcoming,
+    recent,
+    followUpDate: lastVisit
+      ? toDateKey(addDays(consultationStart(lastVisit), 30))
+      : null,
     cancelConsultation,
     isSlotTaken,
   };

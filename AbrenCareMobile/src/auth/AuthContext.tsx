@@ -41,8 +41,7 @@ export interface AuthContextType extends AuthState {
   register: (
     email: string,
     password: string,
-    firstName: string,
-    lastName: string
+    username: string,
   ) => Promise<User | null>;
 
   refreshSession: () => Promise<string | null>;
@@ -467,21 +466,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (
-      email: string,
+      username: string,
       password: string,
-      firstName: string,
-      lastName: string
+      email: string,
     ): Promise<User | null> => {
       try {
         setState((prev) => ({ ...prev, isLoading: true }));
 
-        const response = await authApi.post<{ user: User; message?: string }>(
+        const response = await api.post<{ user: User; message?: string }>(
           "/auth/register/",
           {
-            email,
+            username,
             password,
-            first_name: firstName,
-            last_name: lastName,
+            email,
           }
         );
 

@@ -19,7 +19,9 @@ export interface Doctor {
     consultation_duration: number,
     bio: string,
     is_online: boolean;
+    initials: string;
     slots: string[];
+    rating: number;
     created_at: string,
     updated_at: string,
 }

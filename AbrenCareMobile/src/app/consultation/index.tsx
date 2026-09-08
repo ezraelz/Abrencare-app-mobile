@@ -28,16 +28,17 @@ export default function ConsultationBooking() {
   const { t } = useLanguage();
   const router = useRouter();
   const { 
+    error,
     specialities, 
-    specialty, 
     doctors: allDoctors, 
     fetchDoctorSpecialities, 
     doctorById,
     fetchDoctors,
     filterDoctors,
+    doctorAvailabilities,
     fetchDoctorAvailability 
     } = useDoctor();
-  const { draft, setDraft, book, isSlotTaken } = useConsultations();
+  const { draft, setDraft, book, isSlotTaken, createConsultations } = useConsultations();
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
   const [query, setQuery] = useState("");
   const [time, setTime] = useState<string | null>(null);
@@ -60,12 +61,10 @@ export default function ConsultationBooking() {
 
   const doctors = useMemo(
     () => filterDoctors({ query, specialty: selectedSpecialty }),
-    [query, selectedSpecialty, allDoctors],
+    [query, selectedSpecialty, allDoctors, doctorAvailabilities],
   );
 
-  console.log('filtered doctors:', doctors.length, doctors[0]?.specialty);
-
-  const doctor = doctorById(draft.doctorId);
+  const doctor = doctorById(draft.doctorId, fromDateKey(selectedDate));
 
   const slots = useMemo(() => {
     if (!doctor) {
@@ -124,14 +123,28 @@ export default function ConsultationBooking() {
     });
   }
 
-  function handleBook() {
+  const handleBook = async () => {
     if (!doctor || !time) {
       return;
     }
-
-    book(String(doctor.id), selectedDate, time);
-    setTime(null);
     setConfirmed(true);
+
+    const payload = {
+      doctor: doctor.id,
+      appointment_date: selectedDate,
+      appointment_time: time,
+    }
+
+    try {
+      const res = await book(payload);
+      console.log("Booking data", payload);
+      setTime(null);
+    } catch (err: any) {
+      setConfirmed(false);
+      console.log("Booking failed:", err?.response?.data ?? err);
+    } finally {
+      setConfirmed(false);
+    }
   }
 
   return (
@@ -189,7 +202,7 @@ export default function ConsultationBooking() {
           <FilterChip
             label={t.consultation.allSpecialties}
             selected={selectedSpecialty === null}
-            onPress={() => pickSpecialty(null)}
+            onPress={() => {pickSpecialty(null)}}
           />
 
           {specialities.map((spciality) => (
@@ -197,7 +210,9 @@ export default function ConsultationBooking() {
               key={spciality.id}
               label={spciality.name}
               selected={selectedSpecialty?.id === spciality.id}
-              onPress={() => pickSpecialty(selectedSpecialty?.id === spciality.id ? null : spciality)}
+              onPress={() => {
+                pickSpecialty(selectedSpecialty?.id === spciality.id ? null : spciality)
+              }}
             />
           ))}
         </View>
@@ -224,7 +239,9 @@ export default function ConsultationBooking() {
                     styles.doctorRow,
                     index !== doctors.length - 1 && styles.divider,
                   ]}
-                  onPress={() => pickDoctor(String(item.id))}
+                  onPress={() => {
+                    pickDoctor(String(item.id))
+                  }}
                 >
                   <View
                     style={[styles.avatar, selected && styles.avatarSelected]}
@@ -235,7 +252,7 @@ export default function ConsultationBooking() {
                         selected && styles.avatarTextSelected,
                       ]}
                     >
-                      {item.full_name.charAt(0).toLocaleUpperCase()}
+                      {item.initials}
                     </Text>
                   </View>
 
@@ -251,13 +268,13 @@ export default function ConsultationBooking() {
                       style={[
                         styles.statusDot,
                         {
-                          backgroundColor: item.is_online ? "#5A9964" : "#C9CDD2",
+                          backgroundColor: item.is_online == true ? "#5A9964" : "#C9CDD2",
                         },
                       ]}
                     />
 
                     <Text style={styles.statusText}>
-                      {item.is_online
+                      {item.is_online == true
                         ? t.consultation.online
                         : t.consultation.busy}
                     </Text>
@@ -284,7 +301,7 @@ export default function ConsultationBooking() {
               <View style={styles.consultTop}>
                 <View style={[styles.avatar, styles.avatarSelected]}>
                   <Text style={[styles.avatarText, styles.avatarTextSelected]}>
-                    {doctor.full_name.charAt(0)}
+                    {doctor.initials}
                   </Text>
                 </View>
 
@@ -300,12 +317,12 @@ export default function ConsultationBooking() {
                     style={[
                       styles.statusDot,
                       {
-                        backgroundColor: doctor.is_online ? "#5A9964" : "#C9CDD2",
+                        backgroundColor: doctor.is_online == true ? "#5A9964" : "#C9CDD2",
                       },
                     ]}
                   />
                   <Text style={styles.statusText}>
-                    {doctor.is_online
+                    {doctor.is_online == true
                       ? t.consultation.online
                       : t.consultation.busy}
                   </Text>
@@ -406,7 +423,9 @@ export default function ConsultationBooking() {
                 <TouchableOpacity
                   key={key}
                   style={styles.dayCell}
-                  onPress={() => pickDate(Number(day))}
+                  onPress={() => {
+                    pickDate(Number(day))
+                  }}
                   disabled={isPast}
                 >
                   <View
@@ -441,8 +460,43 @@ export default function ConsultationBooking() {
           </View>
         ) : slots.length === 0 ? (
           <View style={styles.hintCard}>
+            <View style={styles.chipWrap}>
             <Ionicons name="time-outline" size={17} color="#B4BAC1" />
-            <Text style={styles.hintText}>{t.consultation.noSlots}</Text>
+            {/** <Text style={styles.hintText}>{t.consultation.noSlots}</Text> */}
+            {['09:00', '09:30', '10:00', '10:30', '14:00', '14:30'].map((slot)=>{
+              const taken = isSlotTaken(String(doctor.id), selectedDate, slot);
+              const selected = time === slot;
+
+              return (
+                <TouchableOpacity
+                  key={slot}
+                  style={[
+                    styles.slot,
+                    selected && styles.slotSelected,
+                    taken && styles.slotTaken,
+                  ]}
+                  onPress={() => setTime(slot)}
+                  disabled={taken}
+                >
+                  <Text
+                    style={[
+                      styles.slotText,
+                      selected && styles.slotTextSelected,
+                      taken && styles.slotTextTaken,
+                    ]}
+                  >
+                    {slot}
+                  </Text>
+
+                  {taken && (
+                    <Text style={styles.slotTakenLabel}>
+                      {t.consultation.slotTaken}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+            </View>
           </View>
         ) : (
           <View style={styles.chipWrap}>
@@ -458,7 +512,9 @@ export default function ConsultationBooking() {
                     selected && styles.slotSelected,
                     taken && styles.slotTaken,
                   ]}
-                  onPress={() => setTime(slot)}
+                  onPress={() => 
+                    setTime(slot)
+                    }
                   disabled={taken}
                 >
                   <Text
@@ -496,6 +552,8 @@ export default function ConsultationBooking() {
         </TouchableOpacity>
 
         <View style={{ height: 28 }} />
+        <Text style={styles.infoText}>{error}</Text>
+
       </ScrollView>
     </SafeAreaView>
   );

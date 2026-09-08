@@ -1,4 +1,5 @@
 import { Patient } from "@/models/Patient";
+import { Doctor } from "./doctorTypes";
 
 export interface AppointmentCheckIn {
     checked_in_at: string,
@@ -38,7 +39,7 @@ export interface Appointment {
     updated_at: boolean,
 }
 
-export interface Consultaions {
+export interface Consultations {
     id: number,
     appointment: Appointment,
     patient_name: string,
@@ -58,4 +59,10 @@ export interface Consultaions {
     ended_at: string, 
     created_at: string, 
     updated_at: string,
+}
+
+export interface BookConsultations {
+    doctor: number, 
+    appointment_date: string, 
+    appointment_time: string, 
 }

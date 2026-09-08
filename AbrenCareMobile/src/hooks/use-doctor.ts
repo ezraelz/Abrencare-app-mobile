@@ -12,7 +12,7 @@ const WEEKDAYS = [
 ];
 
 /** "Dr. Abebe Kebede" -> "AK", so the avatar chip keeps working with real names. */
-function initialsOf(fullName: string) {
+export function initialsOf(fullName: string) {
   return fullName
     .replace(/^Dr\.?\s*/i, '')
     .split(' ')
@@ -142,10 +142,11 @@ export const useDoctor = () => {
 
     const windows = doctorAvailabilities.filter(
       (item) =>
-        item.doctor.id === doctorId &&
         item.is_available &&
-        item.day.toLowerCase() === weekday,
+        item.day.toLowerCase() == weekday,
     );
+
+    console.log(windows)
 
     const slots: string[] = [];
     for (const window of windows) {
@@ -181,16 +182,12 @@ export const useDoctor = () => {
       ...found,
       name: found.full_name,
       initials: initialsOf(found.full_name),
-      // Backend has no "online" concept for a doctor profile; there's no
-      // real-time presence field in Doctor. Flagging this rather than
-      // guessing — see note below.
-      online: true,
       slots: slotsFor(found.id, forDate ?? new Date()),
     };
   };
 
   function filterDoctors({query,specialty,}: {query: string;
-specialty: Specialty | null;
+    specialty: Specialty | null;
     }) {
     const needle = query.trim().toLowerCase();
 

@@ -13,19 +13,20 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { initialsFor, useAuth } from "@/auth/AuthContext";
+import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { initialsOf } from "@/hooks/use-doctor";
 
 const BLUE = "#6F89B9";
 
 export default function ConsultationProfile() {
   const { t, language, setLanguage } = useLanguage();
   const router = useRouter();
-  const { user, isSignedIn, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   const [notifications, setNotifications] = useState(true);
 
-  const name = user?.name ?? t.profile.guest;
+  const name = user?.username ?? t.profile.guest;
   const email = user?.email ?? t.profile.notSignedIn;
 
   function toggleLanguage() {
@@ -39,7 +40,7 @@ export default function ConsultationProfile() {
         text: t.profile.logOut,
         style: "destructive",
         onPress: () => {
-          signOut();
+          logout();
           router.replace("/(tabs)");
         },
       },
@@ -60,7 +61,7 @@ export default function ConsultationProfile() {
         <View style={styles.identityCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {isSignedIn ? initialsFor(user) : "?"}
+              {user ? initialsOf(user.username) : "?"}
             </Text>
           </View>
 
@@ -69,7 +70,7 @@ export default function ConsultationProfile() {
             <Text style={styles.identityEmail}>{email}</Text>
           </View>
 
-          {!isSignedIn && (
+          {!user && (
             <TouchableOpacity
               style={styles.signInButton}
               onPress={() => router.push("/(auth)/login")}
@@ -199,7 +200,7 @@ export default function ConsultationProfile() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.settingRow, isSignedIn && styles.divider]}
+            style={[styles.settingRow, user && styles.divider]}
             onPress={() =>
               Alert.alert(t.profile.helpSupport, t.profile.helpMessage, [
                 { text: t.profile.ok },
@@ -215,7 +216,7 @@ export default function ConsultationProfile() {
             <Ionicons name="chevron-forward" size={17} color="#C7CCD2" />
           </TouchableOpacity>
 
-          {isSignedIn && (
+          {user && (
             <TouchableOpacity style={styles.settingRow} onPress={handleLogOut}>
               <View style={[styles.settingIcon, styles.logOutIcon]}>
                 <Ionicons name="log-out-outline" size={18} color="#C4626A" />

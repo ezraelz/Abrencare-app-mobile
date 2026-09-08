@@ -17,27 +17,33 @@ import { useRouter } from "expo-router";
 import {
   isJoinable,
   useConsultations,
-  type Consultation,
 } from "@/consultation/ConsultationContext";
 import { doctorById, specialtyLabel } from "@/consultation/doctors";
 import { longDate, shortDate } from "@/consultation/format";
 import { formatDateKey } from "@/family/format";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { Consultations } from "@/types/consultationsTypes";
 
 const BLUE = "#6F89B9";
 
 export default function ConsultationMyCare() {
   const { t } = useLanguage();
   const router = useRouter();
-  const { upcoming, recent, followUpDate, cancel, setDraft } =
-    useConsultations();
+  const { 
+    upcoming, 
+    recent, 
+    followUpDate, 
+    cancelConsultation, 
+    setDraft 
+  } =
+  useConsultations();
 
-  const [summary, setSummary] = useState<Consultation | null>(null);
+  const [summary, setSummary] = useState<Consultations | null>(null);
 
   const next = upcoming[0] ?? null;
   const lastVisit = recent[0] ?? null;
 
-  function handleJoin(consultation: Consultation) {
+  function handleJoin(consultation: Consultations) {
     if (!isJoinable(consultation)) {
       Alert.alert(t.myCare.joinTitle, t.myCare.joinTooEarly, [
         { text: t.myCare.ok },
@@ -47,31 +53,31 @@ export default function ConsultationMyCare() {
 
     router.push({
       pathname: "/consultation/call",
-      params: { doctor: consultation.doctorId },
+      params: { doctor: consultation.doctor_name },
     });
   }
 
-  function handleMessage(consultation: Consultation) {
+  function handleMessage(consultation: Consultations) {
     router.push({
       pathname: "/consultation/chat",
-      params: { doctor: consultation.doctorId },
+      params: { doctor: consultation.doctor_name },
     });
   }
 
-  function handleCancel(consultation: Consultation) {
+  function handleCancel(consultation: Consultations) {
     Alert.alert(t.myCare.cancelTitle, t.myCare.cancelMessage, [
       { text: t.myCare.cancelKeep, style: "cancel" },
       {
         text: t.myCare.cancelConfirm,
         style: "destructive",
-        onPress: () => cancel(consultation.id),
+        onPress: () => cancelConsultation(consultation.id),
       },
     ]);
   }
 
   function bookFollowUp() {
     setDraft({
-      doctorId: lastVisit?.doctorId ?? null,
+      doctorId: lastVisit?.doctor_name ?? null,
       date: followUpDate,
     });
     router.push("/consultation");
@@ -132,7 +138,7 @@ export default function ConsultationMyCare() {
         ) : (
           <View style={styles.card}>
             {recent.map((consultation, index) => {
-              const doctor = doctorById(consultation.doctorId);
+              const doctor = doctorById(consultation.doctor_name);
 
               return (
                 <View
@@ -144,7 +150,7 @@ export default function ConsultationMyCare() {
                 >
                   <View style={styles.dateStamp}>
                     <Text style={styles.dateStampText}>
-                      {shortDate(consultation.date, t)}
+                      {shortDate(consultation.appointment_date, t)}
                     </Text>
                   </View>
 
@@ -241,13 +247,13 @@ function UpcomingCard({
   onMessage,
   onCancel,
 }: {
-  consultation: Consultation;
+  consultation: Consultations;
   onJoin: () => void;
   onMessage: () => void;
   onCancel: () => void;
 }) {
   const { t } = useLanguage();
-  const doctor = doctorById(consultation.doctorId);
+  const doctor = doctorById(consultation.doctor_name);
   const joinable = isJoinable(consultation);
 
   return (
@@ -255,8 +261,8 @@ function UpcomingCard({
       <View style={styles.whenPill}>
         <View style={styles.livePulse} />
         <Text style={styles.whenText}>
-          {formatDateKey(consultation.date, t).toUpperCase()} ·{" "}
-          {consultation.time}
+          {formatDateKey(consultation.appointment_date, t).toUpperCase()} ·{" "}
+          {consultation.appointment_time}
         </Text>
       </View>
 
@@ -305,9 +311,9 @@ function UpcomingCard({
   );
 }
 
-function SummaryBody({ consultation }: { consultation: Consultation }) {
+function SummaryBody({ consultation }: { consultation: Consultations }) {
   const { t } = useLanguage();
-  const doctor = doctorById(consultation.doctorId);
+  const doctor = doctorById(consultation.doctor_name);
 
   return (
     <>
@@ -328,7 +334,7 @@ function SummaryBody({ consultation }: { consultation: Consultation }) {
       <View style={[styles.sheetRow, styles.divider]}>
         <Text style={styles.sheetLabel}>{t.myCare.summaryDate}</Text>
         <Text style={styles.sheetValue}>
-          {longDate(consultation.date, t)} · {consultation.time}
+          {longDate(consultation.appointment_date, t)} · {consultation.appointment_time}
         </Text>
       </View>
 

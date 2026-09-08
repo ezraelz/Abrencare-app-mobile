@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -14,42 +14,63 @@ import { useRouter } from "expo-router";
 
 import { useConsultations } from "@/consultation/ConsultationContext";
 import {
-  SPECIALTIES,
   doctorsInSpecialty,
-  filterDoctors,
-  specialtyLabel,
-  to12Hour,
-  type Doctor,
-  type SpecialtyId,
 } from "@/consultation/doctors";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useDoctor } from "@/hooks/use-doctor";
+import { Doctor, Specialty } from "@/types/doctorTypes";
+import { en } from "@/i18n/translations";
 
 const BLUE = "#6F89B9";
+type Copy = typeof en;
+
+export function to12Hour(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  const suffix = (hours ?? 0) < 12 ? 'AM' : 'PM';
+  const hour = (hours ?? 0) % 12 || 12;
+  return `${hour}:${`${minutes ?? 0}`.padStart(2, '0')} ${suffix}`;
+}
 
 export default function ConsultationDoctors() {
   const { t } = useLanguage();
   const router = useRouter();
   const { setDraft } = useConsultations();
+  const { 
+    doctors, 
+    doctors: allDoctors, 
+    specialities, 
+    fetchDoctors, 
+    fetchDoctorSpecialities,
+    filterDoctors, } = useDoctor();
 
   const [query, setQuery] = useState("");
-  const [specialty, setSpecialty] = useState<SpecialtyId | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
 
   const matches = useMemo(
-    () => filterDoctors({ query, specialty }, t),
-    [query, specialty, t],
+    () => filterDoctors({ query, specialty: selectedSpecialty }, ),
+    [query, selectedSpecialty, allDoctors, t],
   );
 
-  const online = matches.filter((doctor) => doctor.online);
-  const offline = matches.filter((doctor) => !doctor.online);
-  const filtered = query.trim().length > 0 || specialty !== null;
+  const online = matches.filter((doctor) => doctor.is_online);
+  const offline = matches.filter((doctor) => !doctor.is_online);
+  const filtered = query.trim().length > 0 || selectedSpecialty !== null;
+
+  useEffect(()=> {
+    fetchDoctorSpecialities();
+    fetchDoctors();
+  },[]);
+
+  function doctorsInSpecialty(specialty: Specialty) {
+    return doctors.filter((doctor) => doctor.specialty.id === specialty.id);
+  }
 
   function openDoctor(doctor: Doctor) {
-    setDraft({ doctorId: doctor.id });
+    setDraft({ doctorId: String(doctor.id) });
     router.push("/consultation");
   }
 
   function messageDoctor(doctor: Doctor) {
-    setDraft({ doctorId: doctor.id });
+    setDraft({ doctorId: String(doctor.id) });
     router.push({
       pathname: "/consultation/chat",
       params: { doctor: doctor.id },
@@ -58,7 +79,7 @@ export default function ConsultationDoctors() {
 
   function clearFilters() {
     setQuery("");
-    setSpecialty(null);
+    setSelectedSpecialty(null);
   }
 
   return (
@@ -99,16 +120,16 @@ export default function ConsultationDoctors() {
         >
           <FilterChip
             label={t.consultation.allSpecialties}
-            selected={specialty === null}
-            onPress={() => setSpecialty(null)}
+            selected={selectedSpecialty === null}
+            onPress={() => setSelectedSpecialty(null)}
           />
 
-          {SPECIALTIES.map((id) => (
+          {specialities.map((specialty) => (
             <FilterChip
-              key={id}
-              label={specialtyLabel(id, t)}
-              selected={specialty === id}
-              onPress={() => setSpecialty(specialty === id ? null : id)}
+              key={specialty.id}
+              label={specialty.name}
+              selected={selectedSpecialty?.id === specialty.id}
+              onPress={() => setSelectedSpecialty(specialty.id === selectedSpecialty?.id ? null : specialty)}
             />
           ))}
         </ScrollView>
@@ -165,21 +186,21 @@ export default function ConsultationDoctors() {
         <Text style={styles.sectionLabel}>{t.doctorsPage.specialties}</Text>
 
         <View style={styles.card}>
-          {SPECIALTIES.map((id, index) => {
-            const count = doctorsInSpecialty(id).length;
+          {specialities.map((specialty, index) => {
+            const count = doctorsInSpecialty(specialty).length;
 
             return (
               <TouchableOpacity
-                key={id}
+                key={specialty.id}
                 style={[
                   styles.specialtyRow,
-                  index !== SPECIALTIES.length - 1 && styles.divider,
+                  index !== specialities.length - 1 && styles.divider,
                 ]}
-                onPress={() => setSpecialty(id)}
+                onPress={() => setSelectedSpecialty(specialty)}
               >
                 <View style={styles.specialtyInfo}>
                   <Text style={styles.specialtyName}>
-                    {specialtyLabel(id, t)}
+                    {specialty.name}
                   </Text>
 
                   <Text style={styles.specialtyCount}>
@@ -193,7 +214,7 @@ export default function ConsultationDoctors() {
                 <Ionicons
                   name="arrow-forward"
                   size={17}
-                  color={specialty === id ? BLUE : "#C7CCD2"}
+                  color={selectedSpecialty === specialty ? BLUE : "#C7CCD2"}
                 />
               </TouchableOpacity>
             );
@@ -237,41 +258,41 @@ function DoctorCard({
         </View>
 
         <View style={styles.doctorInfo}>
-          <Text style={styles.doctorName}>{doctor.name}</Text>
+          <Text style={styles.doctorName}>{doctor.full_name}</Text>
           <Text style={styles.doctorSpecialty}>
-            {specialtyLabel(doctor.specialty, t)}
+            {doctor.specialty.name}
           </Text>
         </View>
 
         <View
           style={[
             styles.statusPill,
-            doctor.online ? styles.onlinePill : styles.offlinePill,
+            doctor.is_online ? styles.onlinePill : styles.offlinePill,
           ]}
         >
           <View
             style={[
               styles.statusDot,
-              { backgroundColor: doctor.online ? "#5A9964" : "#A8AEB4" },
+              { backgroundColor: doctor.is_online ? "#5A9964" : "#A8AEB4" },
             ]}
           />
 
           <Text
             style={[
               styles.statusText,
-              { color: doctor.online ? "#4E8A58" : "#8D9297" },
+              { color: doctor.is_online ? "#4E8A58" : "#8D9297" },
             ]}
           >
-            {doctor.online ? t.doctorsPage.online : t.doctorsPage.offline}
+            {doctor.is_online ? t.doctorsPage.online : t.doctorsPage.offline}
           </Text>
         </View>
       </View>
 
       <View style={styles.ratingRow}>
         <Stars rating={doctor.rating} />
-        <Text style={styles.ratingText}>{doctor.rating.toFixed(1)}</Text>
+        <Text style={styles.ratingText}>{doctor.rating}</Text>
         <Text style={styles.experience}>
-          {doctor.years}+ {t.doctorsPage.yearsExperience}
+          {doctor.years_of_experience}+ {t.doctorsPage.yearsExperience}
         </Text>
       </View>
 
@@ -279,7 +300,7 @@ function DoctorCard({
         <View style={styles.nextRow}>
           <Ionicons name="time-outline" size={15} color={BLUE} />
           <Text style={styles.nextText}>
-            {t.doctorsPage.nextLabel} · {to12Hour(doctor.slots[0])}
+            {t.doctorsPage.nextLabel} · {}
           </Text>
         </View>
 
