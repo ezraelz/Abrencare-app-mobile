@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from 'react';
@@ -147,6 +148,10 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
         item.time === time,
     );
 
+  useEffect(()=> {
+    fetchConsultaions();
+  },[]);
+  
   const now = Date.now();
   const isPast = (consultation: Consultations) =>
     consultation.status == "completed" || consultationStart(consultation).getTime() < now;

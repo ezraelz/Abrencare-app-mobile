@@ -33,6 +33,10 @@ export default function ConsultationProfile() {
     setLanguage(language === "en" ? "am" : "en");
   }
 
+  const logoutHandler = async() => {
+    await logout();
+  }
+
   function handleLogOut() {
     Alert.alert(t.profile.logOutTitle, t.profile.logOutMessage, [
       { text: t.profile.logOutCancel, style: "cancel" },
@@ -40,7 +44,7 @@ export default function ConsultationProfile() {
         text: t.profile.logOut,
         style: "destructive",
         onPress: () => {
-          logout();
+          logoutHandler();
           router.replace("/(tabs)");
         },
       },
