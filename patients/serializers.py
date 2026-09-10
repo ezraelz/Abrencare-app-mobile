@@ -95,21 +95,7 @@ class PatientSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-        read_only_fields = [
-            "id",
-            "user_id",
-            "full_name",
-            "email",
-            "phone_number",
-            "date_of_birth",
-            "address",
-            "city",
-            "postal_code",
-            "profile_picture_url",
-            "account_status",
-            "created_at",
-            "updated_at",
-        ]
+        read_only_fields = fields
 
     def validate(self, attrs):
         request = self.context.get("request")

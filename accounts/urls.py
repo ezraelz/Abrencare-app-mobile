@@ -6,6 +6,7 @@ from .views import (
     CustomTokenObtainPairView,
     RegisterUserView,
     LogoutUserView,
+    LoginView,
     EnhancedChangePasswordView,
     SendResetCodeView,
     VerifyResetCodeView,
@@ -19,12 +20,7 @@ urlpatterns = [
     # AUTHENTICATION
     # ========================================================
 
-    path(
-        "auth/login/",
-        CustomTokenObtainPairView.as_view(),
-        name="login",
-    ),
-
+    path("auth/login/", CustomTokenObtainPairView.as_view(),name="login",),
     path(
         "auth/register/",
         RegisterUserView.as_view(),

@@ -23,6 +23,8 @@ class Appointment(models.Model):
         Patient,
         on_delete=models.PROTECT,
         related_name="appointments",
+        null=True,
+        blank=True,
     )
 
     doctor = models.ForeignKey(
@@ -30,37 +32,19 @@ class Appointment(models.Model):
         on_delete=models.PROTECT,
         related_name="appointments",
     )
-
     appointment_date = models.DateField()
-
     appointment_time = models.TimeField()
-
     duration_minutes = models.PositiveIntegerField()
-
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
         db_index=True,
     )
-
-    reason_for_visit = models.TextField()
-
-    confirmed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-
-    completed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-
-    cancelled_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-
+    reason_for_visit = models.TextField(null=True,blank=True,)
+    confirmed_at = models.DateTimeField(null=True, blank=True,)
+    completed_at = models.DateTimeField(null=True, blank=True,)
+    cancelled_at = models.DateTimeField(null=True,blank=True,)
     cancelled_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -68,18 +52,9 @@ class Appointment(models.Model):
         blank=True,
         related_name="cancelled_appointments",
     )
-
-    cancellation_reason = models.TextField(
-        blank=True,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    cancellation_reason = models.TextField(blank=True,)
+    created_at = models.DateTimeField(auto_now_add=True,)
+    updated_at = models.DateTimeField(auto_now=True,)
 
     class Meta:
         ordering = [
@@ -152,11 +127,8 @@ class Appointment(models.Model):
         ).time()
 
     def clean(self):
-
         errors = {}
-
         today = timezone.localdate()
-
         if (
             self.appointment_date
             and self.appointment_date < today

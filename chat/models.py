@@ -90,6 +90,14 @@ class Message(models.Model):
         default="text",
     )
 
+    file = models.FileField(
+        upload_to="chat_attachments/%Y/%m/",
+        blank=True,
+        null=True,
+    )
+    file_name = models.CharField(max_length=255, blank=True)
+    file_size = models.PositiveIntegerField(null=True, blank=True)
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )

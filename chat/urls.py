@@ -4,6 +4,7 @@ from .views import (
     ConversationListCreateView,
     ConversationDetailView,
     ConversationMessagesView,
+    ConversationMessageUploadView
 )
 
 
@@ -24,5 +25,10 @@ urlpatterns = [
         "conversations/<int:pk>/messages/",
         ConversationMessagesView.as_view(),
         name="conversation-messages",
+    ),
+
+    path(
+        "conversations/<int:pk>/messages/upload/",
+        ConversationMessageUploadView.as_view(),
     ),
 ]

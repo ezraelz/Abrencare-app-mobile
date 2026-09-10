@@ -144,7 +144,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=["is_active"])
 
 
-
 class PasswordHistory(models.Model):
     user = models.ForeignKey(
         User,

@@ -41,25 +41,20 @@ def _has_conflict(doctor, appointment_date, appointment_time, duration_minutes):
     return False
 
 
-@transaction.atomic
-def book_consultation(
-    *, user, doctor, appointment_date, appointment_time,
-    consultation_type, language, reason_for_visit,
-):
-    try:
-        patient = user.patient
-    except AttributeError:
-        raise ValueError("Authenticated user is not linked to a patient.")
+from patients.models import Patient
 
-    # Lock the doctor row so concurrent booking attempts against this doctor
-    # are serialized. This closes the race window for the overlap check above;
-    # the DB UniqueConstraint below is a second line of defense for the
-    # exact-same-slot case even if this lock were ever bypassed.
-    doctor = Doctor.objects.select_for_update().get(pk=doctor.pk)
+@transaction.atomic
+def book_consultation(*, user, doctor, appointment_date, appointment_time):
+    doctor = Doctor.objects.select_for_update().get(pk=doctor.id)
     duration_minutes = doctor.consultation_duration
 
     if _has_conflict(doctor, appointment_date, appointment_time, duration_minutes):
         raise ValueError("This slot is no longer available. Please choose another time.")
+
+    try:
+        patient = Patient.objects.get(user=user)
+    except Patient.DoesNotExist:
+        raise ValueError("Only patients can book consultations.")
 
     appointment = Appointment(
         patient=patient,
@@ -69,12 +64,8 @@ def book_consultation(
         duration_minutes=duration_minutes,
         status=Appointment.Status.CONFIRMED,
         confirmed_at=timezone.now(),
-        reason_for_visit=reason_for_visit,
     )
 
-    # Appointment.clean() already validates the date isn't in the past and
-    # that the slot fits inside the doctor's availability windows — reuse it
-    # instead of duplicating that logic here.
     try:
         appointment.full_clean()
     except DjangoValidationError as exc:
@@ -83,16 +74,12 @@ def book_consultation(
     try:
         appointment.save()
     except IntegrityError:
-        # Backstop for the rare race the row lock didn't catch (e.g. a slot
-        # freed up and got rebooked between the lock and this save).
         raise ValueError("This slot was just booked by someone else. Please choose another time.")
 
     consultation = Consultation.objects.create(
         appointment=appointment,
-        consultation_type=consultation_type,
-        language=language,
         status=Consultation.Status.SCHEDULED,
-        price=doctor.consultation_fee,  # snapshot fee at booking time
+        price=doctor.consultation_fee,
     )
 
     ConsultationNotificationService.consultation_booked(consultation)

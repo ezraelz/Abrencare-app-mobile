@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import status
@@ -188,26 +189,26 @@ class ConsultationAvailabilityView(APIView):
 class ConsultationBookingView(APIView):
     """Book a digital consultation for the authenticated patient."""
 
-    permission_classes = [IsAuthenticated, IsPatientUser]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = ConsultationBookingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        doctor = get_object_or_404(Doctor, pk=request.data["doctor"])
 
         try:
             consultation = book_consultation(
                 user=request.user,
-                doctor=serializer.validated_data["doctor"],
+                doctor=doctor,
                 appointment_date=serializer.validated_data["appointment_date"],
                 appointment_time=serializer.validated_data["appointment_time"],
-                consultation_type=serializer.validated_data["consultation_type"],
-                language=serializer.validated_data["language"],
-                reason_for_visit=serializer.validated_data["reason_for_visit"],
             )
+
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         response_serializer = ConsultationSerializer(consultation)
+
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 

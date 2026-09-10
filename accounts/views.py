@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from django.db import transaction
 from django.utils import timezone
-
+from django.contrib.auth import authenticate, login,logout
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -207,6 +207,31 @@ class CustomTokenObtainPairView(
     ]
 
 
+class LoginView(APIView): 
+    def post(self, request): 
+        email = request.data.get('email') 
+        password = request.data.get('password') 
+        user = authenticate(email=email, password=password) 
+        profile_image = None
+        if hasattr(user, "profile_image") and user.profile_image:
+            profile_image = request.build_absolute_uri(user.profile_image)
+
+        if user is not None: 
+            login(request, user) 
+            refresh = RefreshToken.for_user(user) 
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "role": user.role.role_name,  # assuming you have a related role model
+                "is_superuser": user.is_superuser,
+                "id": user.id,
+                "username": user.username,
+                "profile_image": profile_image,
+        })
+        else: return Response({'error': 'Invalid credentials'}, status=400)
+
+
+
 # ============================================================
 # USER REGISTRATION
 # ============================================================
@@ -231,6 +256,7 @@ class RegisterUserView(APIView):
         serializer = UserCreateSerializer(
             data=request.data
         )
+        print(request.data)
 
         serializer.is_valid(
             raise_exception=True
@@ -323,7 +349,7 @@ class LogoutUserView(
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
+            logout()
             token.blacklist()
 
             self.log_event(

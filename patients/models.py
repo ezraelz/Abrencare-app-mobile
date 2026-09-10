@@ -33,6 +33,7 @@ class Patient(models.Model):
     gender = models.CharField(
         max_length=30,
         choices=Gender.choices,
+        null=True,
         blank=True,
     )
 
@@ -40,6 +41,7 @@ class Patient(models.Model):
         max_length=10,
         choices=BloodGroup.choices,
         blank=True,
+        null=True,
     )
 
     created_at = models.DateTimeField(
@@ -231,4 +233,4 @@ class MedicalDocument(models.Model):
             f"{self.description} - "
             f"v{self.version}"
         )
-    
+

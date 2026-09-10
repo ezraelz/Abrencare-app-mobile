@@ -40,15 +40,9 @@ class ConversationParticipantSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender_id = serializers.IntegerField(
-        source="sender.id",
-        read_only=True,
-    )
-
-    sender_username = serializers.CharField(
-        source="sender.username",
-        read_only=True,
-    )
+    sender_id = serializers.IntegerField(source="sender.id", read_only=True)
+    sender_username = serializers.CharField(source="sender.username", read_only=True)
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
@@ -59,22 +53,21 @@ class MessageSerializer(serializers.ModelSerializer):
             "sender_username",
             "content",
             "message_type",
+            "file_url",
+            "file_name",
+            "file_size",
             "created_at",
             "updated_at",
             "is_edited",
             "is_deleted",
         ]
+        read_only_fields = [f for f in fields if f != "content"]
 
-        read_only_fields = [
-            "id",
-            "conversation",
-            "sender_id",
-            "sender_username",
-            "created_at",
-            "updated_at",
-            "is_edited",
-            "is_deleted",
-        ]
+    def get_file_url(self, obj):
+        if not obj.file:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.file.url) if request else obj.file.url
 
 
 class ConversationSerializer(serializers.ModelSerializer):

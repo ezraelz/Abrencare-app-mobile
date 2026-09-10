@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Appointment, AppointmentCheckIn
-
+from doctors.models import Doctor
 
 # ---------------------------------------------------------------------------
 # Shared validation helpers (single source of truth)
@@ -123,6 +123,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(
         source="patient.user.full_name", read_only=True
     )
+    doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all())
     doctor_name = serializers.CharField(
         source="doctor.user.full_name", read_only=True
     )
@@ -251,16 +252,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             "doctor",
             "appointment_date",
             "appointment_time",
-            "reason_for_visit",
+            #"reason_for_visit",
         ]
-        extra_kwargs = {
-            "reason_for_visit": {
-                "required": True,
-                "allow_blank": False,
-                "min_length": 5,
-                "max_length": 2000,
-            },
-        }
 
     def validate(self, attrs):
         doctor = attrs["doctor"]

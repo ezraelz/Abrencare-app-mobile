@@ -284,6 +284,7 @@ class DoctorListSerializer(serializers.ModelSerializer):
             "full_name",
             "email",
             "specialty",
+            "is_online",
             "specialty_name",
             "license_number",
             "years_of_experience",
@@ -294,7 +295,12 @@ class DoctorListSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-        read_only_fields = fields
+        read_only_fields = [
+            "id",
+            "is_online",
+            "created_at",
+            "updated_at",
+        ]
 
 
 # ============================================================

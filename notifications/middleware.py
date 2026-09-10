@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
+from rest_framework.exceptions import AuthenticationFailed
 
 class JWTAuthMiddleware:
     """
@@ -38,7 +38,8 @@ class JWTAuthMiddleware:
                 scope["user"] = user
                 scope["token"] = validated_token
 
-            except (InvalidToken, TokenError):
-                pass
+            except (InvalidToken, TokenError, AuthenticationFailed) as exc:
+                print("WS auth failed:", exc)  # temporary, remove after debugging
 
         return await self.inner(scope, receive, send)
+    

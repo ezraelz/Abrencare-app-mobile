@@ -4,6 +4,7 @@ from roles.models import Role
 from roles.serializers import RoleSerializer
 from django.contrib.auth.password_validation import validate_password
 from .models import User
+from patients.models import Patient
 from roles.models import Role
 import re
 try:
@@ -56,18 +57,20 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             "username",
             "email",
-            "first_name",
-            "last_name",
             "password",
         ]
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        role, _= Role.objects.filter(role_name="patient").first()
+        role, _= Role.objects.get_or_create(role_name="patient")
 
-        user = User(**validated_data, role=role)
+        user = User.objects.create(**validated_data, role=role)
         user.set_password(password)
         user.save()
+
+        patient = Patient.objects.create(
+            user=user,
+        )
 
         return user
 

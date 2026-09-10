@@ -26,8 +26,13 @@ class ConsultationDoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         fields = [
-            "id", "name", "specialty", "years_of_experience",
-            "consultation_fee", "consultation_duration", "bio",
+            "id", 
+            "name", 
+            "specialty",
+            "years_of_experience",
+            "consultation_fee", 
+            "consultation_duration", 
+            "bio",
         ]
 
 
@@ -45,25 +50,12 @@ class ConsultationSlotSerializer(serializers.Serializer):
 # ============================================================
 
 class ConsultationBookingSerializer(serializers.Serializer):
-    doctor_id = serializers.PrimaryKeyRelatedField(
-        source="doctor",
-        queryset=Doctor.objects.filter(approval_status=Doctor.ApprovalStatus.APPROVED),
-    )
+    doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all())
     appointment_date = serializers.DateField()
     appointment_time = serializers.TimeField()
-    consultation_type = serializers.ChoiceField(
-        choices=Consultation.Type.choices,
-        default=Consultation.Type.VIDEO,
-    )
-    language = serializers.ChoiceField(
-        choices=Consultation.Language.choices,
-        default=Consultation.Language.ENGLISH,
-    )
-    reason_for_visit = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        default="Digital consultation",
-    )
+    #consultation_type = serializers.ChoiceField(choices=Consultation.Type.choices,default=Consultation.Type.VIDEO,)
+    #language = serializers.ChoiceField(choices=Consultation.Language.choices,default=Consultation.Language.ENGLISH,)
+    #reason_for_visit = serializers.CharField(required=False,allow_blank=True,default="Digital consultation",)
 
     def validate(self, attrs):
         appointment_date = attrs["appointment_date"]
@@ -100,6 +92,7 @@ class ConsultationCancelSerializer(serializers.Serializer):
 class ConsultationSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source="appointment.patient.user.full_name", read_only=True)
     doctor_name = serializers.CharField(source="appointment.doctor.user.full_name", read_only=True)
+    doctor_id = serializers.CharField(source="appointment.doctor.id", read_only=True)
     specialty_name = serializers.CharField(source="appointment.doctor.specialty.name", read_only=True)
     appointment_date = serializers.DateField(source="appointment.appointment_date", read_only=True)
     appointment_time = serializers.TimeField(source="appointment.appointment_time", read_only=True)
@@ -113,6 +106,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "appointment",
             "patient_name",
             "doctor_name", 
+            "doctor_id", 
             "specialty_name",
             "appointment_date", 
             "appointment_time", 
