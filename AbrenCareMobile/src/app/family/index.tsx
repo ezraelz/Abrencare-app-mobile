@@ -41,6 +41,16 @@ export default function FamilyOverview() {
   const { user } = useAuth();
 
   const { nextAppointment } = useAppointments();
+  const { 
+    familyServices, 
+    fetchFamilyServices,
+    isLoading, 
+    error 
+  } = useFamilyService();
+
+  useEffect(()=> {
+    fetchFamilyServices();
+  },[]);
 
   const pulse = useSharedValue(0);
 
@@ -60,7 +70,7 @@ export default function FamilyOverview() {
       : hour < 18
         ? t.family.greetingAfternoon
         : t.family.greetingEvening;
-  const firstName = user?.username.split(" ")[0];
+  const firstName = user?.full_name.split(" ")[0];
 
   async function dial() {
     const url = `tel:${CARE_PHONE}`;

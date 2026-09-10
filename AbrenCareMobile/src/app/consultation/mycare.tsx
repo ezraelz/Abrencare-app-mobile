@@ -53,14 +53,31 @@ export default function ConsultationMyCare() {
 
     router.push({
       pathname: "/consultation/call",
-      params: { doctor: consultation.doctor_name },
+      params: { doctor: consultation.doctor },
     });
   }
 
   function handleMessage(consultation: Consultations) {
+    console.log("Opening chat for consultation:", consultation);
+    console.log("Doctor:", consultation.doctor);
+    console.log("Doctor ID:", consultation.doctor_id);
+
+    const doctorId = Number(consultation.doctor_id);
+
+    if (!doctorId || Number.isNaN(doctorId)) {
+      console.error(
+        "Cannot open chat: doctor ID is missing",
+        consultation
+      );
+      return;
+    }
+
     router.push({
       pathname: "/consultation/chat",
-      params: { doctor: consultation.doctor_name },
+      params: {
+        doctor: String(doctorId),
+        consultation: String(consultation.id),
+      },
     });
   }
 
@@ -253,7 +270,7 @@ function UpcomingCard({
   onCancel: () => void;
 }) {
   const { t } = useLanguage();
-  const doctor = doctorById(consultation.doctor_name);
+  const doctor = doctorById(String(consultation.doctor));
   const joinable = isJoinable(consultation);
 
   return (
@@ -313,7 +330,7 @@ function UpcomingCard({
 
 function SummaryBody({ consultation }: { consultation: Consultations }) {
   const { t } = useLanguage();
-  const doctor = doctorById(consultation.doctor_name);
+  const doctor = doctorById(String(consultation.doctor));
 
   return (
     <>

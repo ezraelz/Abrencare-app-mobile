@@ -33,10 +33,6 @@ export default function ConsultationProfile() {
     setLanguage(language === "en" ? "am" : "en");
   }
 
-  const logoutHandler = async() => {
-    await logout();
-  }
-
   function handleLogOut() {
     Alert.alert(t.profile.logOutTitle, t.profile.logOutMessage, [
       { text: t.profile.logOutCancel, style: "cancel" },
@@ -44,7 +40,7 @@ export default function ConsultationProfile() {
         text: t.profile.logOut,
         style: "destructive",
         onPress: () => {
-          logoutHandler();
+          logout();
           router.replace("/(tabs)");
         },
       },
@@ -65,7 +61,7 @@ export default function ConsultationProfile() {
         <View style={styles.identityCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {user ? initialsOf(user.username) : "?"}
+              {user ? initialsOf(user.full_name) : "?"}
             </Text>
           </View>
 
@@ -221,7 +217,7 @@ export default function ConsultationProfile() {
           </TouchableOpacity>
 
           {user && (
-            <TouchableOpacity style={styles.settingRow} onPress={handleLogOut}>
+            <TouchableOpacity style={styles.settingRow} onPress={()=> handleLogOut()}>
               <View style={[styles.settingIcon, styles.logOutIcon]}>
                 <Ionicons name="log-out-outline" size={18} color="#C4626A" />
               </View>

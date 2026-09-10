@@ -140,18 +140,28 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isSlotTaken = (doctorId: string, date: string, time: string) =>
-    consultations.some(
-      (item: any) =>
-        String(item.doctor.id ?? item.doctorId) === doctorId &&
-        item.date === date &&
-        item.time === time,
-    );
+  const isSlotTaken = (
+    doctorId: string,
+    date: string,
+    time: string,
+  ): boolean => {
+    return consultations.some((item) => {
+      const itemDoctorId =
+        item.doctor?.id 
+
+      return (
+        itemDoctorId != null &&
+        String(itemDoctorId) === String(doctorId) &&
+        item.appointment_date === date &&
+        item.appointment_time === time
+      );
+    });
+  };
 
   useEffect(()=> {
     fetchConsultaions();
   },[]);
-  
+
   const now = Date.now();
   const isPast = (consultation: Consultations) =>
     consultation.status == "completed" || consultationStart(consultation).getTime() < now;

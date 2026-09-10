@@ -537,9 +537,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       if (refreshToken) {
-        await api.post("/auth/logout/", {
-          refresh: refreshToken,
-        });
+        await api.post("/auth/logout/");
       }
     } catch (error) {
       // Logout should still succeed locally even if the server request fails

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,29 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { initialsFor, useAuth } from "@/auth/AuthContext";
+import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { initialsOf } from "@/hooks/use-doctor";
+import { useFamilyService } from "@/hooks/use-family-service";
 
 export default function ConsultationProfile() {
   const { t } = useLanguage();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
+  const { 
+    familyServices, 
+    fetchFamilyServices,
+    isLoading, 
+    error 
+  } = useFamilyService();
+
+  useEffect(()=> {
+    fetchFamilyServices();
+  },[]);
+
+  const familyService = familyServices.map((family)=>{
+    const patient = family
+  });
 
   return (
     <ScrollView
@@ -123,11 +139,11 @@ export default function ConsultationProfile() {
 
         <View style={styles.row}>
           <View style={styles.accountAvatar}>
-            <Text style={styles.accountAvatarText}>{initialsFor(user)}</Text>
+            <Text style={styles.accountAvatarText}>{initialsOf(user?.full_name || "")}</Text>
           </View>
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.accountEmail}</Text>
-            <Text style={styles.value}>{user?.name}</Text>
+            <Text style={styles.value}>{user?.username}</Text>
             <Text style={styles.accountEmail}>{user?.email}</Text>
           </View>
         </View>
@@ -145,7 +161,7 @@ export default function ConsultationProfile() {
       <TouchableOpacity
         style={styles.signOutButton}
         onPress={() => {
-          signOut();
+          logout();
           router.replace("/(tabs)");
         }}
       >

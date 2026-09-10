@@ -4,10 +4,11 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { initialsFor, useAuth } from "@/auth/AuthContext";
+import { useAuth } from "@/auth/AuthContext";
 import { useConsultations } from "@/consultation/ConsultationContext";
 import { doctorById, specialtyLabel } from "@/consultation/doctors";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { initialsOf } from "@/hooks/use-doctor";
 
 function formatDuration(seconds: number) {
   const minutes = `${Math.floor(seconds / 60)}`.padStart(2, "0");
@@ -98,7 +99,7 @@ export default function ConsultationCall() {
 
       <View style={styles.selfView}>
         {cameraOn ? (
-          <Text style={styles.selfViewText}>{initialsFor(user)}</Text>
+          <Text style={styles.selfViewText}>{initialsOf(user?.full_name ?? "")}</Text>
         ) : (
           <Ionicons name="videocam-off" size={20} color="#9AA3AF" />
         )}

@@ -34,7 +34,7 @@ export default function FamilyLayout() {
   }
 
   // ✅ Now check if user has services
-  if (!familyServices || familyServices.length === 0) {
+  if (familyServices.length <= 0) {
     return <ServiceAuthGate variant="family" redirectTo="/family" />;
   }
 

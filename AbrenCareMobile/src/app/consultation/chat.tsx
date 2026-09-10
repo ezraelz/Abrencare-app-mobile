@@ -1,4 +1,6 @@
-import React, { useRef, useState } from "react";
+// consultation/chat.tsx
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -10,26 +12,22 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
-
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { useConsultations } from "@/consultation/ConsultationContext";
 import { doctorById, specialtyLabel } from "@/consultation/doctors";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useChat } from "@/contexts/ChatContext";
+import { chatApi } from "@/services/chatApi";
 
 const BLUE = "#6F89B9";
 
 type FileKind = "photo" | "document" | "lab";
-
-type ChatMessage = {
-  id: string;
-  from: "me" | "them";
-  time: string;
-  text?: string;
-  file?: { name: string; size: string; kind: FileKind };
-};
 
 const fileIcons: Record<FileKind, keyof typeof Ionicons.glyphMap> = {
   photo: "image-outline",
@@ -37,99 +35,136 @@ const fileIcons: Record<FileKind, keyof typeof Ionicons.glyphMap> = {
   lab: "flask-outline",
 };
 
-function nowTime() {
-  const date = new Date();
+function formatTime(iso: string) {
+  const date = new Date(iso);
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
   const suffix = date.getHours() >= 12 ? "PM" : "AM";
   const hour = date.getHours() % 12 === 0 ? 12 : date.getHours() % 12;
   return `${hour}:${minutes} ${suffix}`;
 }
 
+function inferKind(name?: string | null): FileKind {
+  if (name && /\.(jpe?g|png|gif|webp)$/i.test(name)) return "photo";
+  return "document";
+}
+
 export default function ConsultationChat() {
   const { t } = useLanguage();
   const router = useRouter();
-  const params = useLocalSearchParams() as { doctor?: string };
-  const { draft } = useConsultations();
+  const params = useLocalSearchParams();
+  const { draft, consultation, fetchConsultaion } = useConsultations();
   const scrollRef = useRef<ScrollView>(null);
 
-  const doctor = doctorById(params.doctor ?? draft.doctorId);
+  const {
+    messages,
+    loading,
+    connected,
+    typing,
+    currentUserId,
+    conversation,
+    startConversationWith,
+    sendMessage,
+  } = useChat();
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "m1",
-      from: "them",
-      time: "10:52 AM",
-      text: t.consultationChat.message1,
-    },
-    {
-      id: "m2",
-      from: "me",
-      time: "11:04 AM",
-      text: t.consultationChat.message2,
-    },
-    {
-      id: "m3",
-      from: "them",
-      time: "11:06 AM",
-      text: t.consultationChat.message3,
-    },
-  ]);
+  const doctorId = params.doctor
+  ? Number(params.doctor)
+  : null;
+
   const [text, setText] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  function append(message: Omit<ChatMessage, "id" | "time">) {
-    setMessages((current) => [
-      ...current,
-      { ...message, id: `m-${Date.now()}-${current.length}`, time: nowTime() },
-    ]);
-  }
+  // Kick off (or reuse) the private conversation once we know the doctor's id
+  useEffect(() => {
+    if (doctorId) {
+      startConversationWith(Number(doctorId));
+    }
+  }, [doctorId]);
+
+  useEffect(() => {
+    fetchConsultaion(params.consultation);
+  },[]);
+
+  console.log(doctorId, 'doctor id', consultation, 'consultation id');
+  console.log("params.doctor:", params.doctor);
 
   function handleSend() {
     const value = text.trim();
-    if (!value) {
-      return;
-    }
+    if (!value) return;
 
-    append({ from: "me", text: value });
+    sendMessage(value);
     setText("");
   }
 
-  function shareFile(kind: FileKind, name: string, size: string) {
-    setSheetOpen(false);
-    append({ from: "me", file: { name, size, kind } });
+  console.log(messages, 'messages sent')
 
-    setTimeout(() => {
-      append({ from: "them", text: t.consultationChat.fileReply });
-    }, 1200);
+  async function pickAndSendPhoto() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+
+    if (result.canceled || !conversation) return;
+
+    const asset = result.assets[0];
+    await uploadAndClose({
+      uri: asset.uri,
+      name: asset.fileName ?? "photo.jpg",
+      type: asset.mimeType ?? "image/jpeg",
+    });
   }
 
-  const attachments: {
-    kind: FileKind;
-    label: string;
-    name: string;
-    size: string;
-  }[] = [
-    {
-      kind: "photo",
-      label: t.consultationChat.attachPhoto,
-      name: "symptom-photo.jpg",
-      size: "1.2 MB",
-    },
-    {
-      kind: "document",
-      label: t.consultationChat.attachDocument,
-      name: "referral-letter.pdf",
-      size: "240 KB",
-    },
-    {
-      kind: "lab",
-      label: t.consultationChat.attachLab,
-      name: "blood-panel.pdf",
-      size: "186 KB",
-    },
+  async function pickAndSendDocument() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf", "image/*"],
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled || !conversation) return;
+
+    const asset = result.assets[0];
+    await uploadAndClose({
+      uri: asset.uri,
+      name: asset.name,
+      type: asset.mimeType ?? "application/octet-stream",
+    });
+  }
+
+  async function uploadAndClose(file: { uri: string; name: string; type: string }) {
+    if (!conversation) return;
+
+    setSheetOpen(false);
+    setUploading(true);
+
+    try {
+      // The upload view broadcasts the new message over the socket,
+      // so ChatContext's handleIncoming picks it up for every
+      // connected participant, including this one — no manual append needed.
+      await chatApi.uploadFile(conversation.id, file);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      // TODO: surface a toast/alert here
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleAttachmentPress(kind: FileKind) {
+    if (kind === "photo") {
+      pickAndSendPhoto();
+    } else {
+      // "document" and "lab" both go through the file picker
+      pickAndSendDocument();
+    }
+  }
+
+  const attachments: { kind: FileKind; label: string }[] = [
+    { kind: "photo", label: t.consultationChat.attachPhoto },
+    { kind: "document", label: t.consultationChat.attachDocument },
+    { kind: "lab", label: t.consultationChat.attachLab },
   ];
 
-  const initials = doctor?.initials ?? "AC";
+  const initials = consultation?.doctor_name.charAt(0) ?? "AC";
 
   return (
     <KeyboardAvoidingView
@@ -147,10 +182,10 @@ export default function ConsultationChat() {
 
         <View style={styles.headerInfo}>
           <Text style={styles.name} numberOfLines={1}>
-            {doctor?.name}
+            {consultation?.doctor_name}
           </Text>
           <Text style={styles.subtitle} numberOfLines={1}>
-            {doctor ? specialtyLabel(doctor.specialty, t) : ""}
+            {doctorId ? consultation?.specialty_name : ""}
           </Text>
         </View>
 
@@ -158,16 +193,16 @@ export default function ConsultationChat() {
           <View
             style={[
               styles.presenceDot,
-              { backgroundColor: doctor?.online ? "#5A9964" : "#C9CDD2" },
+              { backgroundColor: connected ? "#5A9964" : "#C9CDD2" },
             ]}
           />
           <Text
             style={[
               styles.presenceText,
-              { color: doctor?.online ? "#4E8A58" : "#8D9297" },
+              { color: connected ? "#4E8A58" : "#8D9297" },
             ]}
           >
-            {doctor?.online
+            {connected
               ? t.consultationChat.online
               : t.consultationChat.offline}
           </Text>
@@ -178,7 +213,7 @@ export default function ConsultationChat() {
           onPress={() =>
             router.push({
               pathname: "/consultation/call",
-              params: doctor ? { doctor: doctor.id } : undefined,
+              params: doctorId ? { doctor: doctorId } : undefined,
             })
           }
           accessibilityLabel={t.consultationChat.videoCall}
@@ -187,79 +222,87 @@ export default function ConsultationChat() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.noticeBar}>
-        <Ionicons
-          name={doctor?.online ? "chatbubble-ellipses-outline" : "time-outline"}
-          size={14}
-          color="#8D9297"
-        />
-        <Text style={styles.noticeText}>
-          {doctor?.online
-            ? t.consultationChat.replyTime
-            : t.consultationChat.awayNotice}
-        </Text>
-      </View>
+      {typing && (
+        <View style={styles.noticeBar}>
+          <Ionicons name="chatbubble-ellipses-outline" size={14} color="#8D9297" />
+          <Text style={styles.noticeText}>
+            {typing.username} {t.consultationChat.replyTime}
+          </Text>
+        </View>
+      )}
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.chatArea}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() =>
-          scrollRef.current?.scrollToEnd({ animated: true })
-        }
-      >
-        {messages.map((message) =>
-          message.from === "them" ? (
-            <View key={message.id} style={styles.theirRow}>
-              <View style={styles.smallAvatar}>
-                <Text style={styles.smallAvatarText}>{initials}</Text>
-              </View>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={BLUE} />
+        </View>
+      ) : (
+        <ScrollView
+          ref={scrollRef}
+          style={styles.chatArea}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() =>
+            scrollRef.current?.scrollToEnd({ animated: true })
+          }
+        >
+          {messages.map((message) => {
+            const isMine = message.sender_id === currentUserId;
+            const hasFile = message.message_type !== "text" && message.file_url;
 
-              <View>
-                <View style={styles.theirBubble}>
-                  {message.file ? (
+            return isMine ? (
+              <View key={message.id} style={styles.myRow}>
+                <View style={[styles.myBubble, hasFile && styles.fileBubble]}>
+                  {hasFile ? (
                     <FileCard
-                      file={message.file}
+                      name={message.file_name ?? "Attachment"}
+                      url={message.file_url!}
                       openLabel={t.consultationChat.open}
+                      outgoing
                     />
                   ) : (
-                    <Text style={styles.theirText}>{message.text}</Text>
+                    <Text style={styles.myText}>{message.content}</Text>
                   )}
                 </View>
-
-                <Text style={styles.timeLeft}>{message.time}</Text>
+                <Text style={styles.timeRight}>{formatTime(message.created_at)}</Text>
               </View>
-            </View>
-          ) : (
-            <View key={message.id} style={styles.myRow}>
-              <View
-                style={[styles.myBubble, message.file && styles.fileBubble]}
-              >
-                {message.file ? (
-                  <FileCard
-                    file={message.file}
-                    openLabel={t.consultationChat.open}
-                    outgoing
-                  />
-                ) : (
-                  <Text style={styles.myText}>{message.text}</Text>
-                )}
-              </View>
+            ) : (
+              <View key={message.id} style={styles.theirRow}>
+                <View style={styles.smallAvatar}>
+                  <Text style={styles.smallAvatarText}>{initials}</Text>
+                </View>
 
-              <Text style={styles.timeRight}>{message.time}</Text>
-            </View>
-          ),
-        )}
-      </ScrollView>
+                <View>
+                  <View style={styles.theirBubble}>
+                    {hasFile ? (
+                      <FileCard
+                        name={message.file_name ?? "Attachment"}
+                        url={message.file_url!}
+                        openLabel={t.consultationChat.open}
+                      />
+                    ) : (
+                      <Text style={styles.theirText}>{message.content}</Text>
+                    )}
+                  </View>
+                  <Text style={styles.timeLeft}>{formatTime(message.created_at)}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
 
       <View style={styles.inputBar}>
         <TouchableOpacity
           style={styles.attachButton}
           onPress={() => setSheetOpen(true)}
           accessibilityLabel={t.consultationChat.attachTitle}
+          disabled={uploading}
         >
-          <Ionicons name="attach" size={20} color={BLUE} />
+          {uploading ? (
+            <ActivityIndicator size="small" color={BLUE} />
+          ) : (
+            <Ionicons name="attach" size={20} color={BLUE} />
+          )}
         </TouchableOpacity>
 
         <TextInput
@@ -287,47 +330,29 @@ export default function ConsultationChat() {
           <Pressable style={styles.sheet}>
             <View style={styles.sheetHandle} />
 
-            <Text style={styles.sheetTitle}>
-              {t.consultationChat.attachTitle}
-            </Text>
-            <Text style={styles.sheetSubtitle}>
-              {t.consultationChat.attachSubtitle}
-            </Text>
+            <Text style={styles.sheetTitle}>{t.consultationChat.attachTitle}</Text>
+            <Text style={styles.sheetSubtitle}>{t.consultationChat.attachSubtitle}</Text>
 
             {attachments.map((attachment) => (
               <TouchableOpacity
                 key={attachment.kind}
                 style={styles.sheetRow}
-                onPress={() =>
-                  shareFile(attachment.kind, attachment.name, attachment.size)
-                }
+                onPress={() => handleAttachmentPress(attachment.kind)}
               >
                 <View style={styles.sheetIcon}>
-                  <Ionicons
-                    name={fileIcons[attachment.kind]}
-                    size={18}
-                    color={BLUE}
-                  />
+                  <Ionicons name={fileIcons[attachment.kind]} size={18} color={BLUE} />
                 </View>
 
                 <View style={styles.sheetRowInfo}>
                   <Text style={styles.sheetRowLabel}>{attachment.label}</Text>
-                  <Text style={styles.sheetRowMeta}>
-                    {attachment.name} · {attachment.size}
-                  </Text>
                 </View>
 
                 <Ionicons name="chevron-forward" size={16} color="#C7CCD2" />
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity
-              style={styles.sheetCancel}
-              onPress={() => setSheetOpen(false)}
-            >
-              <Text style={styles.sheetCancelText}>
-                {t.consultationChat.attachCancel}
-              </Text>
+            <TouchableOpacity style={styles.sheetCancel} onPress={() => setSheetOpen(false)}>
+              <Text style={styles.sheetCancelText}>{t.consultationChat.attachCancel}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -337,22 +362,28 @@ export default function ConsultationChat() {
 }
 
 function FileCard({
-  file,
+  name,
+  url,
   openLabel,
   outgoing,
 }: {
-  file: { name: string; size: string; kind: FileKind };
+  name: string;
+  url: string;
   openLabel: string;
   outgoing?: boolean;
 }) {
+  const kind = inferKind(name);
+
   return (
-    <View style={styles.fileRow}>
+    <TouchableOpacity
+      style={styles.fileRow}
+      onPress={() => {
+        // Open in-browser / native viewer. Swap for Linking.openURL(url)
+        // or a proper in-app viewer as needed.
+      }}
+    >
       <View style={[styles.fileIcon, outgoing && styles.fileIconOutgoing]}>
-        <Ionicons
-          name={fileIcons[file.kind]}
-          size={18}
-          color={outgoing ? "#FFFFFF" : BLUE}
-        />
+        <Ionicons name={fileIcons[kind]} size={18} color={outgoing ? "#FFFFFF" : BLUE} />
       </View>
 
       <View style={styles.fileInfo}>
@@ -360,10 +391,10 @@ function FileCard({
           style={[styles.fileName, outgoing && styles.fileTextOutgoing]}
           numberOfLines={1}
         >
-          {file.name}
+          {name}
         </Text>
         <Text style={[styles.fileMeta, outgoing && styles.fileMetaOutgoing]}>
-          {file.size} · {openLabel}
+          {openLabel}
         </Text>
       </View>
 
@@ -372,16 +403,12 @@ function FileCard({
         size={16}
         color={outgoing ? "#DEE7F3" : "#9AA3AF"}
       />
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAF9F6",
-  },
-
+  container: { flex: 1, backgroundColor: "#FAF9F6" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -393,324 +420,93 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F1EFEB",
     backgroundColor: "#FFFFFF",
   },
-
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "#EAF0F7",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: "#EAF0F7", alignItems: "center", justifyContent: "center",
   },
-
-  avatarText: {
-    color: BLUE,
-    fontWeight: "700",
-    fontSize: 12,
-  },
-
-  headerInfo: {
-    flex: 1,
-  },
-
-  name: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#172B42",
-  },
-
-  subtitle: {
-    fontSize: 11,
-    color: "#8D9297",
-    marginTop: 2,
-  },
-
-  presence: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-
-  presenceDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-
-  presenceText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-
+  avatarText: { color: BLUE, fontWeight: "700", fontSize: 12 },
+  headerInfo: { flex: 1 },
+  name: { fontSize: 15, fontWeight: "700", color: "#172B42" },
+  subtitle: { fontSize: 11, color: "#8D9297", marginTop: 2 },
+  presence: { flexDirection: "row", alignItems: "center", gap: 5 },
+  presenceDot: { width: 7, height: 7, borderRadius: 4 },
+  presenceText: { fontSize: 11, fontWeight: "600" },
   callButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: BLUE,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: BLUE, alignItems: "center", justifyContent: "center",
   },
-
   noticeBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    backgroundColor: "#F4F7FB",
+    flexDirection: "row", alignItems: "center", gap: 7,
+    paddingHorizontal: 18, paddingVertical: 10, backgroundColor: "#F4F7FB",
   },
-
-  noticeText: {
-    flex: 1,
-    fontSize: 11,
-    color: "#8D9297",
-  },
-
-  chatArea: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingTop: 15,
-  },
-
-  theirRow: {
-    flexDirection: "row",
-    marginBottom: 18,
-  },
-
+  noticeText: { flex: 1, fontSize: 11, color: "#8D9297" },
+  loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
+  chatArea: { flex: 1, paddingHorizontal: 15, paddingTop: 15 },
+  theirRow: { flexDirection: "row", marginBottom: 18 },
   smallAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    backgroundColor: "#EAF0F7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-    marginTop: 4,
+    width: 24, height: 24, borderRadius: 8, backgroundColor: "#EAF0F7",
+    alignItems: "center", justifyContent: "center", marginRight: 8, marginTop: 4,
   },
-
-  smallAvatarText: {
-    color: BLUE,
-    fontSize: 9,
-    fontWeight: "700",
-  },
-
-  theirBubble: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 12,
-    maxWidth: 270,
-  },
-
-  theirText: {
-    color: "#374151",
-    fontSize: 13,
-    lineHeight: 19,
-  },
-
-  myRow: {
-    alignItems: "flex-end",
-    marginBottom: 18,
-  },
-
-  myBubble: {
-    backgroundColor: BLUE,
-    padding: 12,
-    borderRadius: 14,
-    maxWidth: 262,
-  },
-
-  fileBubble: {
-    minWidth: 232,
-  },
-
-  myText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    lineHeight: 19,
-  },
-
-  timeLeft: {
-    fontSize: 10,
-    color: "#AAA",
-    marginTop: 4,
-    marginLeft: 5,
-  },
-
-  timeRight: {
-    fontSize: 10,
-    color: "#AAA",
-    marginTop: 4,
-    marginRight: 5,
-  },
-
-  fileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  smallAvatarText: { color: BLUE, fontSize: 9, fontWeight: "700" },
+  theirBubble: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 12, maxWidth: 270 },
+  theirText: { color: "#374151", fontSize: 13, lineHeight: 19 },
+  myRow: { alignItems: "flex-end", marginBottom: 18 },
+  myBubble: { backgroundColor: BLUE, padding: 12, borderRadius: 14, maxWidth: 262 },
+  fileBubble: { minWidth: 232 },
+  myText: { color: "#FFFFFF", fontSize: 13, lineHeight: 19 },
+  timeLeft: { fontSize: 10, color: "#AAA", marginTop: 4, marginLeft: 5 },
+  timeRight: { fontSize: 10, color: "#AAA", marginTop: 4, marginRight: 5 },
+  fileRow: { flexDirection: "row", alignItems: "center" },
   fileIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "#EAF0F7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
+    width: 34, height: 34, borderRadius: 10, backgroundColor: "#EAF0F7",
+    alignItems: "center", justifyContent: "center", marginRight: 10,
   },
-
-  fileIconOutgoing: {
-    backgroundColor: "rgba(255, 255, 255, 0.22)",
-  },
-
-  fileInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-
-  fileName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#374151",
-  },
-
-  fileMeta: {
-    fontSize: 11,
-    color: "#9AA3AF",
-    marginTop: 2,
-  },
-
-  fileTextOutgoing: {
-    color: "#FFFFFF",
-  },
-
-  fileMetaOutgoing: {
-    color: "#DEE7F3",
-  },
-
+  fileIconOutgoing: { backgroundColor: "rgba(255, 255, 255, 0.22)" },
+  fileInfo: { flex: 1, marginRight: 8 },
+  fileName: { fontSize: 13, fontWeight: "700", color: "#374151" },
+  fileMeta: { fontSize: 11, color: "#9AA3AF", marginTop: 2 },
+  fileTextOutgoing: { color: "#FFFFFF" },
+  fileMetaOutgoing: { color: "#DEE7F3" },
   inputBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F1EFEB",
-    backgroundColor: "#FFFFFF",
+    flexDirection: "row", alignItems: "center", gap: 10, padding: 12,
+    borderTopWidth: 1, borderTopColor: "#F1EFEB", backgroundColor: "#FFFFFF",
   },
-
   attachButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 13,
-    backgroundColor: "#EAF0F7",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 45, height: 45, borderRadius: 13, backgroundColor: "#EAF0F7",
+    alignItems: "center", justifyContent: "center",
   },
-
   input: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E4E2DD",
-    borderRadius: 13,
-    paddingHorizontal: 14,
-    height: 45,
-    fontSize: 14,
-    color: "#172B42",
+    flex: 1, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E4E2DD",
+    borderRadius: 13, paddingHorizontal: 14, height: 45, fontSize: 14, color: "#172B42",
   },
-
   sendButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 13,
-    backgroundColor: BLUE,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 45, height: 45, borderRadius: 13, backgroundColor: BLUE,
+    alignItems: "center", justifyContent: "center",
   },
-
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(20, 24, 30, 0.45)",
-    justifyContent: "flex-end",
-  },
-
+  backdrop: { flex: 1, backgroundColor: "rgba(20, 24, 30, 0.45)", justifyContent: "flex-end" },
   sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 30,
+    backgroundColor: "#FFFFFF", borderTopLeftRadius: 22, borderTopRightRadius: 22,
+    paddingHorizontal: 18, paddingTop: 10, paddingBottom: 30,
   },
-
   sheetHandle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E3E3E3",
-    marginBottom: 16,
+    alignSelf: "center", width: 40, height: 4, borderRadius: 2,
+    backgroundColor: "#E3E3E3", marginBottom: 16,
   },
-
-  sheetTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#172B42",
-  },
-
-  sheetSubtitle: {
-    fontSize: 12,
-    color: "#9AA3AF",
-    marginTop: 4,
-    marginBottom: 14,
-    lineHeight: 17,
-  },
-
+  sheetTitle: { fontSize: 17, fontWeight: "700", color: "#172B42" },
+  sheetSubtitle: { fontSize: 12, color: "#9AA3AF", marginTop: 4, marginBottom: 14, lineHeight: 17 },
   sheetRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F2F2F2",
+    flexDirection: "row", alignItems: "center", paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: "#F2F2F2",
   },
-
   sheetIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#EAF0F7",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
+    width: 38, height: 38, borderRadius: 12, backgroundColor: "#EAF0F7",
+    alignItems: "center", justifyContent: "center", marginRight: 12,
   },
-
-  sheetRowInfo: {
-    flex: 1,
-  },
-
-  sheetRowLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#172B42",
-  },
-
-  sheetRowMeta: {
-    fontSize: 11,
-    color: "#9AA3AF",
-    marginTop: 2,
-  },
-
+  sheetRowInfo: { flex: 1 },
+  sheetRowLabel: { fontSize: 14, fontWeight: "600", color: "#172B42" },
   sheetCancel: {
-    marginTop: 16,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "#F4F7FB",
-    alignItems: "center",
-    justifyContent: "center",
+    marginTop: 16, height: 50, borderRadius: 14, backgroundColor: "#F4F7FB",
+    alignItems: "center", justifyContent: "center",
   },
-
-  sheetCancelText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: BLUE,
-  },
+  sheetCancelText: { fontSize: 15, fontWeight: "600", color: BLUE },
 });

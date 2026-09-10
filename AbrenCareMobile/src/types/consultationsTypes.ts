@@ -43,6 +43,8 @@ export interface Consultations {
     id: number,
     appointment: Appointment,
     patient_name: string,
+    doctor: Doctor;
+    doctor_id: number;
     doctor_name: string, 
     specialty_name: string,
     appointment_date: string, 

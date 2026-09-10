@@ -11,16 +11,13 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
 import { useConsultations } from "@/consultation/ConsultationContext";
-
-
 import { monthTitle } from "@/consultation/format";
 import { fromDateKey, toDateKey } from "@/family/AppointmentsContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { monthGridMondayFirst, useDoctor } from "@/hooks/use-doctor";
 import { Specialty } from "@/types/doctorTypes";
-import { mondayFirstWeekdays, SpecialtyId } from "@/consultation/doctors";
+import { mondayFirstWeekdays } from "@/consultation/doctors";
 
 const BLUE = "#6F89B9";
 
@@ -38,7 +35,7 @@ export default function ConsultationBooking() {
     doctorAvailabilities,
     fetchDoctorAvailability 
     } = useDoctor();
-  const { draft, setDraft, book, isSlotTaken, createConsultations } = useConsultations();
+  const { draft, setDraft, book, isSlotTaken } = useConsultations();
   const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
   const [query, setQuery] = useState("");
   const [time, setTime] = useState<string | null>(null);
@@ -137,7 +134,6 @@ export default function ConsultationBooking() {
 
     try {
       const res = await book(payload);
-      console.log("Booking data", payload);
       setTime(null);
     } catch (err: any) {
       setConfirmed(false);

@@ -7,6 +7,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AppointmentsProvider } from '@/family/AppointmentsContext';
 import { ReminderWatcher } from '@/family/ReminderWatcher';
 import { LanguageProvider } from '@/i18n/LanguageContext';
+import { ChatProvider } from '@/contexts/ChatContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -16,13 +17,15 @@ export default function RootLayout() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppointmentsProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <AnimatedSplashOverlay />
-            <ReminderWatcher />
-            <Stack screenOptions={{ headerShown: false }} />
-          </ThemeProvider>
-        </AppointmentsProvider>
+        <ChatProvider>
+          <AppointmentsProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <AnimatedSplashOverlay />
+              <ReminderWatcher />
+              <Stack screenOptions={{ headerShown: false }} />
+            </ThemeProvider>
+          </AppointmentsProvider>
+        </ChatProvider>
       </AuthProvider>
     </LanguageProvider>
   );
