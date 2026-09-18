@@ -3,6 +3,7 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ConsultationProvider } from '@/consultation/ConsultationContext';
+import ServiceAccessGate from '@/components/ServiceAccessGate';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 type TabIconProps = { color: string; size: number; focused: boolean };
@@ -11,6 +12,7 @@ export default function ConsultationLayout() {
   const { t } = useLanguage();
 
   return (
+    <ServiceAccessGate service="consultation">
     <ConsultationProvider>
       <Tabs
         screenOptions={{
@@ -92,5 +94,6 @@ export default function ConsultationLayout() {
         <Tabs.Screen name="call" options={{ href: null }} />
       </Tabs>
     </ConsultationProvider>
+    </ServiceAccessGate>
   );
 }

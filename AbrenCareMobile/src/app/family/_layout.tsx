@@ -2,21 +2,16 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useAuth } from '@/auth/AuthContext';
-import ServiceAuthGate from '@/components/ServiceAuthGate';
+import ServiceAccessGate from '@/components/ServiceAccessGate';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 type TabIconProps = { color: string; size: number; focused: boolean };
 
 export default function FamilyLayout() {
   const { t } = useLanguage();
-  const { isSignedIn } = useAuth();
-
-  if (!isSignedIn) {
-    return <ServiceAuthGate variant="family" redirectTo="/family" />;
-  }
 
   return (
+    <ServiceAccessGate service="family">
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -88,5 +83,6 @@ export default function FamilyLayout() {
       />
       <Tabs.Screen name="call" options={{ href: null }} />
     </Tabs>
+    </ServiceAccessGate>
   );
 }
