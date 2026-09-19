@@ -191,7 +191,7 @@ export default function WelcomeScreen() {
 
             {activeIndex === 1 && (
               <Pressable
-                onPress={() => router.push("/login")}
+                onPress={() => router.push("/(tabs)")}
                 style={({ pressed }) => [
                   styles.primaryButton,
                   pressed && styles.buttonPressed,
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
 
   uiLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "space-between",
   },
 
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   ===================================== */
 
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
 
     backgroundColor: "rgba(0, 0, 0, 0.08)",
   },
