@@ -1,3 +1,6 @@
+import { useAuth } from "@/auth/AuthContext";
+import { dashboardFor, onboardingPath } from "@/auth/serviceTheme";
+import type { CareService } from "@/auth/types";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,7 +38,6 @@ type ServiceItem = {
   accentColor: string;
   iconBackground: string;
   tags?: string[];
-  route: string;
 };
 
 type Props = {
@@ -45,6 +47,7 @@ type Props = {
 export default function ServiceCard({ services }: Props) {
   const router = useRouter();
   const { t } = useLanguage();
+  const { hasService, needsOnboarding } = useAuth();
   const scrollX = useSharedValue(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [trackWidth, setTrackWidth] = useState(SCREEN_WIDTH - 64);
@@ -61,7 +64,6 @@ export default function ServiceCard({ services }: Props) {
       accentColor: "#2F80ED",
       iconBackground: "#EAF6FF",
       tags: [...t.home.familyTags],
-      route: "/family",
     },
     {
       id: "executive",
@@ -73,7 +75,6 @@ export default function ServiceCard({ services }: Props) {
       accentColor: "#8B5CF6",
       iconBackground: "#F3E8FF",
       tags: [...t.home.executiveTags],
-      route: "/executive",
     },
     {
       id: "consultation",
@@ -85,7 +86,6 @@ export default function ServiceCard({ services }: Props) {
       accentColor: "#10B981",
       iconBackground: "#D1FAE5",
       tags: [...t.home.consultationTags],
-      route: "/consultation",
     },
   ];
 
@@ -104,8 +104,16 @@ export default function ServiceCard({ services }: Props) {
     setActiveIndex(Math.max(0, Math.min(nextIndex, items.length - 1)));
   };
 
-  const handleChoose = (route: string) => {
-    router.push(route as any);
+  const handleChoose = (service: CareService) => {
+    if (hasService(service) && !needsOnboarding(service)) {
+      router.push(dashboardFor(service));
+      return;
+    }
+    if (hasService(service) && needsOnboarding(service)) {
+      router.push(onboardingPath(service));
+      return;
+    }
+    router.push({ pathname: "/signup", params: { service } });
   };
 
   return (
@@ -160,7 +168,7 @@ export default function ServiceCard({ services }: Props) {
             cardWidth={cardWidth}
             scrollX={scrollX}
             chooseLabel={t.home.chooseService}
-            onChoose={() => handleChoose(item.route)}
+            onChoose={() => handleChoose(item.id as CareService)}
           />
         )}
       />
@@ -273,7 +281,10 @@ function ServiceSlide({
     <Animated.View
       style={[styles.slide, cardStyle, { width: cardWidth, marginRight: CARD_GAP }]}
     >
-      <View style={[styles.card, { borderColor: item.accentColor }]}>
+      <Pressable
+        onPress={onChoose}
+        style={[styles.card, { borderColor: item.accentColor }]}
+      >
         <LinearGradient
           colors={[item.accentColor, "transparent"]}
           start={{ x: 0, y: 0 }}
@@ -334,18 +345,13 @@ function ServiceSlide({
           </View>
         )}
 
-        <Pressable
-          onPress={onChoose}
-          style={({ pressed }) => [
-            styles.chooseButton,
-            { backgroundColor: item.accentColor },
-            pressed && styles.chooseButtonPressed,
-          ]}
+        <View
+          style={[styles.chooseButton, { backgroundColor: item.accentColor }]}
         >
           <Text style={styles.chooseButtonText}>{chooseLabel}</Text>
           <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-        </Pressable>
-      </View>
+        </View>
+      </Pressable>
     </Animated.View>
   );
 }

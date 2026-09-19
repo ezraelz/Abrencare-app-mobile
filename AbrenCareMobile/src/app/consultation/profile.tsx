@@ -73,7 +73,12 @@ export default function ConsultationProfile() {
           {!user && (
             <TouchableOpacity
               style={styles.signInButton}
-              onPress={() => router.push("/(auth)/login")}
+              onPress={() =>
+                router.push({
+                  pathname: "/login",
+                  params: { service: "consultation" },
+                })
+              }
             >
               <Text style={styles.signInText}>{t.profile.signIn}</Text>
             </TouchableOpacity>

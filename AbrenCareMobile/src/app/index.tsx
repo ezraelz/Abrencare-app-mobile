@@ -191,7 +191,7 @@ export default function WelcomeScreen() {
 
             {activeIndex === 1 && (
               <Pressable
-                onPress={() => router.push("/(tabs)")}
+                onPress={() => router.replace("/(tabs)")}
                 style={({ pressed }) => [
                   styles.primaryButton,
                   pressed && styles.buttonPressed,

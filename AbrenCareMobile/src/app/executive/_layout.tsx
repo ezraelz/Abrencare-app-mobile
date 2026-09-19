@@ -2,19 +2,14 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useAuth } from '@/auth/AuthContext';
-import ServiceAuthGate from '@/components/ServiceAuthGate';
+import ServiceAccessGate from '@/components/ServiceAccessGate';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export default function ExecutiveLayout() {
   const { t } = useLanguage();
-  const { isSignedIn } = useAuth();
-
-  if (!isSignedIn) {
-    return <ServiceAuthGate variant="executive" redirectTo="/executive" />;
-  }
 
   return (
+    <ServiceAccessGate service="executive">
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -76,5 +71,6 @@ export default function ExecutiveLayout() {
         }}
       />
     </Tabs>
+    </ServiceAccessGate>
   );
 }
