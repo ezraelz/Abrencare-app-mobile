@@ -128,7 +128,7 @@ export default function FamilyAppointments() {
 
       {confirmation && (
         <View style={styles.confirmBanner}>
-          <Ionicons name="checkmark-circle" size={18} color="#2F855A" />
+          <Ionicons name="checkmark-circle" size={18} color="#8B9A7C" />
           <Text style={styles.confirmText}>
             {t.familyAppointments.syncNote}
           </Text>
@@ -194,7 +194,7 @@ export default function FamilyAppointments() {
                       size={12}
                       color={
                         appointment.reminderMinutes !== null
-                          ? '#2F855A'
+                          ? '#8B9A7C'
                           : '#9AA3AF'
                       }
                     />
@@ -249,7 +249,7 @@ export default function FamilyAppointments() {
                 <Ionicons
                   name={typeIcons[type]}
                   size={14}
-                  color={active ? '#FFFFFF' : '#6B8E55'}
+                  color={active ? '#FFFFFF' : '#8B9A7C'}
                 />
                 <Text
                   style={[
@@ -431,7 +431,7 @@ export default function FamilyAppointments() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F4EF',
+    backgroundColor: '#F6F2EA',
   },
 
   content: {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
 
   headerLabel: {
     fontSize: 11,
-    color: '#7A8A7A',
+    color: '#6F6A64',
     letterSpacing: 1,
     fontWeight: '600',
   },
@@ -450,13 +450,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2F3A2F',
+    color: '#2A2622',
     marginTop: 2,
   },
 
   subtitle: {
     fontSize: 13,
-    color: '#6F7F73',
+    color: '#6F6A64',
     marginTop: 6,
     marginBottom: 16,
     lineHeight: 19,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#EAF2EB',
+    backgroundColor: '#E8EDE4',
     borderRadius: 14,
     padding: 12,
     marginBottom: 16,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   confirmText: {
     flex: 1,
     fontSize: 12,
-    color: '#243B2E',
+    color: '#2A2622',
     fontWeight: '500',
   },
 
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
 
   greenLine: {
     height: 3,
-    backgroundColor: '#6A8D69',
+    backgroundColor: '#8B9A7C',
     borderRadius: 20,
     marginBottom: 14,
   },
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   dateBoxDay: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#3F4A3F',
+    color: '#2A2622',
   },
 
   dateBoxMonth: {
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   appointmentType: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#27352A',
+    color: '#2A2622',
   },
 
   appointmentMeta: {
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   },
 
   reminderChipOn: {
-    backgroundColor: '#EAF2EB',
+    backgroundColor: '#E8EDE4',
   },
 
   reminderChipText: {
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
 
   reminderChipTextOn: {
-    color: '#2F855A',
+    color: '#8B9A7C',
   },
 
   deleteButton: {
@@ -628,19 +628,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 12,
-    backgroundColor: '#F4F6F2',
+    backgroundColor: '#E8EDE4',
     borderWidth: 1,
     borderColor: '#E6EAE2',
   },
 
   typeChipActive: {
-    backgroundColor: '#8DA684',
-    borderColor: '#8DA684',
+    backgroundColor: '#8B9A7C',
+    borderColor: '#8B9A7C',
   },
 
   typeChipText: {
     fontSize: 12,
-    color: '#4A5D45',
+    color: '#5E7054',
     fontWeight: '600',
   },
 
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
   calendarMonth: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#27352A',
+    color: '#2A2622',
   },
 
   arrowDisabled: {
@@ -698,12 +698,12 @@ const styles = StyleSheet.create({
   },
 
   dayActive: {
-    backgroundColor: '#8DA684',
+    backgroundColor: '#8B9A7C',
   },
 
   dayText: {
     fontSize: 13,
-    color: '#3F4A3F',
+    color: '#2A2622',
     fontWeight: '600',
   },
 
@@ -724,22 +724,22 @@ const styles = StyleSheet.create({
   },
 
   dayDotVisible: {
-    backgroundColor: '#6A8D69',
+    backgroundColor: '#8B9A7C',
   },
 
   slot: {
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 12,
-    backgroundColor: '#F4F6F2',
+    backgroundColor: '#E8EDE4',
     borderWidth: 1,
     borderColor: '#E6EAE2',
     alignItems: 'center',
   },
 
   slotActive: {
-    backgroundColor: '#8DA684',
-    borderColor: '#8DA684',
+    backgroundColor: '#8B9A7C',
+    borderColor: '#8B9A7C',
   },
 
   slotTaken: {
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
   slotText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#4A5D45',
+    color: '#5E7054',
   },
 
   slotTextActive: {
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#91A887',
+    backgroundColor: '#8B9A7C',
     minHeight: 56,
     borderRadius: 14,
     justifyContent: 'center',

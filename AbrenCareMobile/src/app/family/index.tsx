@@ -24,13 +24,13 @@ import { formatDateKey, reminderLabel } from "@/family/format";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useFamilyService } from "@/hooks/use-family-service";
 
-const GREEN = "#6A8D69";
+const GREEN = "#8B9A7C";
 const CARE_PHONE = "+251912345678";
 
 type Tone = "good" | "info" | "flag";
 
 const tones: Record<Tone, { text: string; bg: string }> = {
-  good: { text: "#2F855A", bg: "#E6F4EA" },
+  good: { text: "#8B9A7C", bg: "#E8EDE4" },
   info: { text: "#556CD6", bg: "#E8EEFF" },
   flag: { text: "#D64545", bg: "#FFE8E8" },
 };
@@ -335,7 +335,7 @@ export default function FamilyOverview() {
             <Ionicons
               name={item.done ? "checkmark-circle" : "ellipse-outline"}
               size={20}
-              color={item.done ? "#2F855A" : "#C7CCC2"}
+              color={item.done ? "#8B9A7C" : "#C7CCC2"}
             />
 
             <View style={styles.planInfo}>
@@ -348,7 +348,7 @@ export default function FamilyOverview() {
             <Text
               style={[
                 styles.planStatus,
-                { color: item.done ? "#2F855A" : "#9AA3AF" },
+                { color: item.done ? "#8B9A7C" : "#9AA3AF" },
               ]}
             >
               {item.done ? t.family.carePlanDone : t.family.carePlanUpcoming}
@@ -379,8 +379,8 @@ export default function FamilyOverview() {
                 </Text>
               </View>
 
-              <View style={[styles.badge, { backgroundColor: "#EEF7E9" }]}>
-                <Text style={[styles.badgeText, { color: "#6B8E55" }]}>
+              <View style={[styles.badge, { backgroundColor: "#E8EDE4" }]}>
+                <Text style={[styles.badgeText, { color: "#8B9A7C" }]}>
                   {t.family.booked}
                 </Text>
               </View>
@@ -396,7 +396,7 @@ export default function FamilyOverview() {
                 size={13}
                 color={
                   nextAppointment.reminderMinutes !== null
-                    ? "#2F855A"
+                    ? "#8B9A7C"
                     : "#9AA3AF"
                 }
               />
@@ -418,7 +418,7 @@ export default function FamilyOverview() {
           style={styles.manageButton}
           onPress={() => router.push("/family/appointments")}
         >
-          <Ionicons name="calendar-outline" size={15} color="#4A5D45" />
+          <Ionicons name="calendar-outline" size={15} color="#5E7054" />
           <Text style={styles.manageText}>
             {nextAppointment
               ? t.family.manageAppointments
@@ -441,8 +441,8 @@ export default function FamilyOverview() {
             <Text style={styles.teamRole}>{t.family.assignedNurse}</Text>
           </View>
 
-          <View style={[styles.badge, { backgroundColor: "#E6F4EA" }]}>
-            <Text style={[styles.badgeText, { color: "#2F855A" }]}>
+          <View style={[styles.badge, { backgroundColor: "#E8EDE4" }]}>
+            <Text style={[styles.badgeText, { color: "#8B9A7C" }]}>
               {t.family.onVisit}
             </Text>
           </View>
@@ -463,7 +463,7 @@ export default function FamilyOverview() {
           </View>
 
           <View style={[styles.badge, { backgroundColor: "#F1F1EE" }]}>
-            <Text style={[styles.badgeText, { color: "#7C8C7D" }]}>
+            <Text style={[styles.badgeText, { color: "#6F6A64" }]}>
               {t.family.availableNow}
             </Text>
           </View>
@@ -488,7 +488,7 @@ export default function FamilyOverview() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7F4EF",
+    backgroundColor: "#F6F2EA",
   },
 
   content: {
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   active: {
     flex: 1,
     fontSize: 11,
-    color: "#7A8A7A",
+    color: "#6F6A64",
     letterSpacing: 1.2,
     fontWeight: "700",
   },
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#EAF2EB",
+    backgroundColor: "#E8EDE4",
     paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 20,
@@ -530,30 +530,30 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#2F855A",
+    backgroundColor: "#8B9A7C",
   },
 
   planChipText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#2F855A",
+    color: "#8B9A7C",
   },
 
   title: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#2F3A2F",
+    color: "#2A2622",
   },
 
   subtitle: {
     fontSize: 13,
-    color: "#7C8C7D",
+    color: "#6F6A64",
     marginTop: 4,
     marginBottom: 20,
   },
 
   visitCard: {
-    backgroundColor: "#EAF2EB",
+    backgroundColor: "#E8EDE4",
     borderWidth: 1,
     borderColor: "#D3E4D5",
     borderRadius: 16,
@@ -579,32 +579,32 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#2F855A",
+    backgroundColor: "#8B9A7C",
   },
 
   liveDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#2F855A",
+    backgroundColor: "#8B9A7C",
   },
 
   liveLabel: {
     fontSize: 10,
     letterSpacing: 1.2,
     fontWeight: "700",
-    color: "#2F855A",
+    color: "#8B9A7C",
   },
 
   visitTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#243B2E",
+    color: "#2A2622",
     marginTop: 11,
   },
 
   visitSubtitle: {
-    color: "#6F7F73",
+    color: "#6F6A64",
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
 
   countBadge: {
-    backgroundColor: "#EAF2EB",
+    backgroundColor: "#E8EDE4",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#2F855A",
+    color: "#8B9A7C",
   },
 
   actionRow: {
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 13,
-    backgroundColor: "#EFF3EC",
+    backgroundColor: "#E8EDE4",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#4A5D45",
+    color: "#5E7054",
     textAlign: "center",
   },
 
@@ -779,11 +779,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#27352A",
+    color: "#2A2622",
   },
 
   info: {
-    color: "#7C8C7D",
+    color: "#6F6A64",
     fontSize: 12,
     marginTop: 3,
   },
@@ -851,14 +851,14 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#EFF3EC",
+    backgroundColor: "#E8EDE4",
     overflow: "hidden",
   },
 
   progressFill: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#6A8D69",
+    backgroundColor: "#8B9A7C",
   },
 
   progressCaption: {
@@ -886,11 +886,11 @@ const styles = StyleSheet.create({
   planTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#27352A",
+    color: "#2A2622",
   },
 
   planDone: {
-    color: "#6F7F73",
+    color: "#6F6A64",
   },
 
   planTime: {
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 13,
-    backgroundColor: "#EFF3EC",
+    backgroundColor: "#E8EDE4",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -926,7 +926,7 @@ const styles = StyleSheet.create({
   },
 
   nurse: {
-    color: "#7C8C7D",
+    color: "#6F6A64",
     fontSize: 12,
     marginTop: 3,
   },
@@ -940,7 +940,7 @@ const styles = StyleSheet.create({
 
   reminderText: {
     fontSize: 12,
-    color: "#6F7F73",
+    color: "#6F6A64",
     fontWeight: "500",
   },
 
@@ -957,13 +957,13 @@ const styles = StyleSheet.create({
     marginTop: 14,
     height: 44,
     borderRadius: 12,
-    backgroundColor: "#F4F6F2",
+    backgroundColor: "#E8EDE4",
   },
 
   manageText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#4A5D45",
+    color: "#5E7054",
   },
 
   teamRow: {
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#EAF2EB",
+    backgroundColor: "#E8EDE4",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -989,19 +989,19 @@ const styles = StyleSheet.create({
   teamAvatarText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2F855A",
+    color: "#8B9A7C",
   },
 
   teamAvatarTextNeutral: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#7C8C7D",
+    color: "#6F6A64",
   },
 
   teamName: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#27352A",
+    color: "#2A2622",
   },
 
   teamRole: {
@@ -1014,7 +1014,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#EFF3EC",
+    backgroundColor: "#E8EDE4",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
-    backgroundColor: "#8DA684",
+    backgroundColor: "#8B9A7C",
     height: 54,
     borderRadius: 14,
   },

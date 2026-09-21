@@ -2,10 +2,36 @@ export type CareService = 'family' | 'executive' | 'consultation';
 
 export type FamilyMemberKind = 'child' | 'spouse' | 'parent' | 'member';
 
+export type FamilyRelationship =
+  | 'mother'
+  | 'father'
+  | 'parent'
+  | 'spouse'
+  | 'child'
+  | 'other';
+
+export type FamilyCareNeed =
+  | 'homeVisits'
+  | 'vitals'
+  | 'medication'
+  | 'labs'
+  | 'doctor'
+  | 'general';
+
 export type FamilyMember = {
   id: string;
   kind: FamilyMemberKind;
   name: string;
+  relationship: FamilyRelationship;
+  dateOfBirth: string;
+  phone: string;
+  city: string;
+  address: string;
+  emergencyPhone: string;
+  careNeed: FamilyCareNeed | null;
+  preferredLanguage: 'en' | 'am' | '';
+  notes: string;
+  status: 'active' | 'pending';
 };
 
 export type Gender = 'female' | 'male' | 'other' | 'preferNot';
@@ -62,6 +88,21 @@ export function emptyUser(partial: Pick<AuthUser, 'name' | 'email'> & Partial<Au
     consultationOnboarded: false,
     ...partial,
   };
+}
+
+export function kindFromRelationship(
+  relationship: FamilyRelationship,
+): FamilyMemberKind {
+  if (relationship === 'child') {
+    return 'child';
+  }
+  if (relationship === 'spouse') {
+    return 'spouse';
+  }
+  if (relationship === 'other') {
+    return 'member';
+  }
+  return 'parent';
 }
 
 export function isCareService(value: unknown): value is CareService {

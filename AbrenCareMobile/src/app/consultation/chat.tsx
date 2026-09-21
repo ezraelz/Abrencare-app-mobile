@@ -25,7 +25,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useChat } from "@/contexts/ChatContext";
 import { chatApi } from "@/services/chatApi";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 type FileKind = "photo" | "document" | "lab";
 
@@ -408,7 +408,11 @@ function FileCard({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAF9F6" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F4F6F8",
+  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -436,8 +440,12 @@ const styles = StyleSheet.create({
     backgroundColor: BLUE, alignItems: "center", justifyContent: "center",
   },
   noticeBar: {
-    flexDirection: "row", alignItems: "center", gap: 7,
-    paddingHorizontal: 18, paddingVertical: 10, backgroundColor: "#F4F7FB",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    backgroundColor: "#EEF2F6",
   },
   noticeText: { flex: 1, fontSize: 11, color: "#8D9297" },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -505,8 +513,12 @@ const styles = StyleSheet.create({
   sheetRowInfo: { flex: 1 },
   sheetRowLabel: { fontSize: 14, fontWeight: "600", color: "#172B42" },
   sheetCancel: {
-    marginTop: 16, height: 50, borderRadius: 14, backgroundColor: "#F4F7FB",
-    alignItems: "center", justifyContent: "center",
+    marginTop: 16,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#EEF2F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
   sheetCancelText: { fontSize: 15, fontWeight: "600", color: BLUE },
 });

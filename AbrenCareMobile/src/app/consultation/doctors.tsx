@@ -21,15 +21,7 @@ import { useDoctor } from "@/hooks/use-doctor";
 import { Doctor, Specialty } from "@/types/doctorTypes";
 import { en } from "@/i18n/translations";
 
-const BLUE = "#6F89B9";
-type Copy = typeof en;
-
-export function to12Hour(time: string) {
-  const [hours, minutes] = time.split(':').map(Number);
-  const suffix = (hours ?? 0) < 12 ? 'AM' : 'PM';
-  const hour = (hours ?? 0) % 12 || 12;
-  return `${hour}:${`${minutes ?? 0}`.padStart(2, '0')} ${suffix}`;
-}
+const BLUE = "#7E93A8";
 
 export default function ConsultationDoctors() {
   const { t } = useLanguage();
@@ -372,7 +364,7 @@ function FilterChip({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {

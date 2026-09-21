@@ -24,7 +24,7 @@ import { formatDateKey } from "@/family/format";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Consultations } from "@/types/consultationsTypes";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 export default function ConsultationMyCare() {
   const { t } = useLanguage();
@@ -369,7 +369,7 @@ function SummaryBody({ consultation }: { consultation: Consultations }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     width: 52,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: "#F4F7FB",
+    backgroundColor: "#EEF2F6",
     alignItems: "center",
   },
 

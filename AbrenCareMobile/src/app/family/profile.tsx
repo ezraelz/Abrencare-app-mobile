@@ -72,7 +72,7 @@ export default function ConsultationProfile() {
         <Text style={styles.sectionTitle}>{t.profile.personalInformation}</Text>
 
         <View style={styles.row}>
-          <Ionicons name="person-outline" size={20} color="#8AA07D" />
+          <Ionicons name="person-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.fullName}</Text>
             <Text style={styles.value}>Ato Tadesse</Text>
@@ -82,7 +82,7 @@ export default function ConsultationProfile() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="calendar-outline" size={20} color="#8AA07D" />
+          <Ionicons name="calendar-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.age}</Text>
             <Text style={styles.value}>{t.profile.ageValue}</Text>
@@ -92,7 +92,7 @@ export default function ConsultationProfile() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="location-outline" size={20} color="#8AA07D" />
+          <Ionicons name="location-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.address}</Text>
             <Text style={styles.value}>{t.profile.addressValue}</Text>
@@ -102,7 +102,7 @@ export default function ConsultationProfile() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="call-outline" size={20} color="#8AA07D" />
+          <Ionicons name="call-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.phone}</Text>
             <Text style={styles.value}>+251 91 234 5678</Text>
@@ -115,7 +115,7 @@ export default function ConsultationProfile() {
         <Text style={styles.sectionTitle}>{t.profile.emergencyContact}</Text>
 
         <View style={styles.row}>
-          <Ionicons name="people-outline" size={20} color="#8AA07D" />
+          <Ionicons name="people-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.coordinator}</Text>
             <Text style={styles.value}>Marta Tesfaye</Text>
@@ -125,7 +125,7 @@ export default function ConsultationProfile() {
         <View style={styles.separator} />
 
         <View style={styles.row}>
-          <Ionicons name="medkit-outline" size={20} color="#8AA07D" />
+          <Ionicons name="medkit-outline" size={20} color="#8B9A7C" />
           <View style={styles.info}>
             <Text style={styles.label}>{t.profile.assignedNurse}</Text>
             <Text style={styles.value}>Meron Girma</Text>
@@ -175,7 +175,7 @@ export default function ConsultationProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F7F4EF",
+    backgroundColor: "#F6F2EA",
     padding: 18,
   },
 
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "700",
-    color: "#27352A",
+    color: "#2A2622",
     marginBottom: 18,
   },
 
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 22,
     fontWeight: "700",
-    color: "#27352A",
+    color: "#2A2622",
   },
 
   subtitle: {
@@ -234,14 +234,14 @@ const styles = StyleSheet.create({
 
   statusBadge: {
     marginTop: 14,
-    backgroundColor: "#EAF4E8",
+    backgroundColor: "#E8EDE4",
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
   },
 
   statusText: {
-    color: "#5D9C59",
+    color: "#8B9A7C",
     fontWeight: "600",
     fontSize: 12,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontSize: 16,
     fontWeight: "600",
-    color: "#27352A",
+    color: "#2A2622",
   },
 
   separator: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: "#8FA585",
+    backgroundColor: "#8B9A7C",
     height: 54,
     borderRadius: 14,
     justifyContent: "center",
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
 
   secondaryText: {
-    color: "#27352A",
+    color: "#2A2622",
     fontWeight: "600",
     fontSize: 15,
   },
@@ -324,13 +324,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#EAF2EB",
+    backgroundColor: "#E8EDE4",
     alignItems: "center",
     justifyContent: "center",
   },
 
   accountAvatarText: {
-    color: "#2F855A",
+    color: "#8B9A7C",
     fontWeight: "700",
     fontSize: 13,
   },

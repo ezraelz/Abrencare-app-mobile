@@ -113,7 +113,7 @@ export default function ExecutiveReports() {
               onPress={() => setPickerOpen(true)}
             >
               <Text style={styles.periodChipText}>{periodLabel}</Text>
-              <Ionicons name="chevron-down" size={13} color="#C28A1D" />
+              <Ionicons name="chevron-down" size={13} color="#C4A05A" />
             </TouchableOpacity>
           </View>
 
@@ -464,7 +464,7 @@ function LineChart({ trend }: { trend: TrendSeries }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F8F4EC",
   },
 
   header: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
 
   reportHeader: {
-    backgroundColor: "#FFF5E4",
+    backgroundColor: "#F3E8D0",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#F1E3C7",
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   periodChipText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
     letterSpacing: 0.5,
   },
 

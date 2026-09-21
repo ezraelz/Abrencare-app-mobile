@@ -285,7 +285,7 @@ export default function FamilyReports() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F5F0',
+    backgroundColor: '#F6F2EA',
     paddingHorizontal: 14,
     paddingTop: 55,
   },
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '700',
-    color: '#27352A',
+    color: '#2A2622',
     marginBottom: 14,
   },
 
@@ -328,14 +328,14 @@ const styles = StyleSheet.create({
   },
 
   tabActive: {
-    backgroundColor: '#8DA684',
-    borderColor: '#8DA684',
+    backgroundColor: '#8B9A7C',
+    borderColor: '#8B9A7C',
   },
 
   tabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#7A8A7A',
+    color: '#6F6A64',
   },
 
   tabTextActive: {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   },
 
   refill: {
-    color: '#6B8E55',
+    color: '#8B9A7C',
     fontWeight: '600',
   },
 
@@ -449,11 +449,11 @@ const styles = StyleSheet.create({
   yearText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#7A8A7A',
+    color: '#6F6A64',
   },
 
   button: {
-    backgroundColor: '#91A887',
+    backgroundColor: '#8B9A7C',
     height: 56,
     borderRadius: 14,
     justifyContent: 'center',

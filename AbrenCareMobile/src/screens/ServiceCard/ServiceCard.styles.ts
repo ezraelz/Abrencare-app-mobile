@@ -37,7 +37,12 @@ const styles = StyleSheet.create({
   },
 
   slide: {
-    paddingVertical: 10,
+    paddingVertical: 12,
+    shadowColor: "#2A2622",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 8,
   },
 
   card: {

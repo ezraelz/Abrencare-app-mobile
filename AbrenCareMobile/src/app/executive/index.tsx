@@ -48,8 +48,8 @@ export default function ExecutiveOverview() {
       value: "72 BPM",
       label: t.executive.heartRateShort,
       status: t.executive.normal,
-      tint: "#FFF2E3",
-      iconColor: "#E59C2D",
+      tint: "#F3E8D0",
+      iconColor: "#C4A05A",
     },
     {
       icon: "water-outline",
@@ -81,7 +81,7 @@ export default function ExecutiveOverview() {
       {/* Greeting */}
       <View style={styles.greetingCard}>
         <View style={styles.greetingIcon}>
-          <Ionicons name="sunny-outline" size={18} color="#C28A1D" />
+          <Ionicons name="sunny-outline" size={18} color="#C4A05A" />
         </View>
 
         <View style={{ flex: 1 }}>
@@ -135,7 +135,7 @@ export default function ExecutiveOverview() {
 
       <View style={styles.doctorCard}>
         <View style={styles.managerAvatar}>
-          <Ionicons name="person" size={18} color="#C28A1D" />
+          <Ionicons name="person" size={18} color="#C4A05A" />
         </View>
 
         <View style={{ flex: 1 }}>
@@ -146,7 +146,7 @@ export default function ExecutiveOverview() {
 
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.managerSecondary}>
-          <Ionicons name="chatbubble-outline" size={16} color="#D79A24" />
+          <Ionicons name="chatbubble-outline" size={16} color="#C4A05A" />
           <Text style={styles.managerSecondaryText}>
             {t.executive.message}
           </Text>
@@ -298,7 +298,7 @@ export default function ExecutiveOverview() {
       {/* Needs attention */}
       <View style={styles.attentionCard}>
         <View style={styles.statusHeader}>
-          <Ionicons name="warning-outline" size={16} color="#E59C2D" />
+          <Ionicons name="warning-outline" size={16} color="#C4A05A" />
           <Text style={styles.attentionLabel}>
             {t.executive.needsAttention}
           </Text>
@@ -314,7 +314,7 @@ export default function ExecutiveOverview() {
 
         <TouchableOpacity style={styles.linkRow}>
           <Text style={styles.linkTextAmber}>{t.executive.viewDetails}</Text>
-          <Ionicons name="arrow-forward" size={13} color="#C28A1D" />
+          <Ionicons name="arrow-forward" size={13} color="#C4A05A" />
         </TouchableOpacity>
       </View>
 
@@ -323,7 +323,7 @@ export default function ExecutiveOverview() {
 
       <View style={styles.upcomingCard}>
         <View style={styles.upcomingIcon}>
-          <Ionicons name="calendar-outline" size={18} color="#C28A1D" />
+          <Ionicons name="calendar-outline" size={18} color="#C4A05A" />
         </View>
 
         <View style={{ flex: 1 }}>
@@ -367,12 +367,12 @@ export default function ExecutiveOverview() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F8F4EC",
     padding: 16,
   },
 
   smallTitle: {
-    color: "#C28A1D",
+    color: "#C4A05A",
     fontSize: 10,
     letterSpacing: 1,
     fontWeight: "600",
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D79A24",
+    borderColor: "#C4A05A",
     backgroundColor: "#FFF",
     flexDirection: "row",
     justifyContent: "center",
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   },
 
   managerSecondaryText: {
-    color: "#D79A24",
+    color: "#C4A05A",
     fontWeight: "700",
     fontSize: 14,
   },
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#D79A24",
+    backgroundColor: "#C4A05A",
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -613,13 +613,13 @@ const styles = StyleSheet.create({
   linkTextAmber: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
   },
 
   attentionCard: {
-    backgroundColor: "#FFF6EC",
+    backgroundColor: "#F3E8D0",
     borderWidth: 1,
-    borderColor: "#F0C37A",
+    borderColor: "#E0C078",
     borderRadius: 14,
     padding: 14,
     marginBottom: 20,
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     letterSpacing: 1,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
   },
 
   attentionTitle: {
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   upcomingWhen: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#C28A1D",
+    color: "#C4A05A",
     marginTop: 3,
   },
 
@@ -683,9 +683,9 @@ const styles = StyleSheet.create({
   },
 
   alertCard: {
-    backgroundColor: "#FFF6EC",
+    backgroundColor: "#F3E8D0",
     borderWidth: 1,
-    borderColor: "#F0C37A",
+    borderColor: "#E0C078",
     borderRadius: 14,
     padding: 14,
     marginBottom: 18,
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#E59C2D",
+    backgroundColor: "#C4A05A",
     marginTop: 5,
     marginRight: 10,
   },
@@ -770,11 +770,11 @@ const styles = StyleSheet.create({
   },
 
   orange: {
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
   },
 
   orangeText: {
-    color: "#E59C2D",
+    color: "#C4A05A",
     fontWeight: "600",
     fontSize: 11,
   },
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     flex: 1,
     height: 54,
-    backgroundColor: "#D79A24",
+    backgroundColor: "#C4A05A",
     borderRadius: 14,
     flexDirection: "row",
     justifyContent: "center",
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D79A24",
+    borderColor: "#C4A05A",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
   },
 
   secondaryText: {
-    color: "#D79A24",
+    color: "#C4A05A",
     fontWeight: "700",
   },
 
@@ -913,14 +913,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
 
   accountAvatarText: {
-    color: "#C28A1D",
+    color: "#C4A05A",
     fontWeight: "700",
     fontSize: 13,
   },

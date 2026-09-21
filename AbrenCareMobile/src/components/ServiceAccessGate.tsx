@@ -14,7 +14,7 @@ export default function ServiceAccessGate({ service, children }: Props) {
 
   if (!isSignedIn || !hasService(service)) {
     return (
-      <Replace href={`/signup?service=${service}`} />
+      <Replace href={`/service?service=${service}`} />
     );
   }
 
