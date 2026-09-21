@@ -13,7 +13,7 @@ export default function ExecutiveLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#8B5CF6',
+        tabBarActiveTintColor: '#C4A05A',
         tabBarInactiveTintColor: '#A0AEC0',
         tabBarStyle: {
           height: 70,

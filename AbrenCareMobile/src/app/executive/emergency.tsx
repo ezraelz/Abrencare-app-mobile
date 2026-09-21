@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
 
   scroll: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F8F4EC",
   },
 
   scrollContent: {
@@ -516,16 +516,16 @@ const styles = StyleSheet.create({
   },
 
   currentDot: {
-    backgroundColor: "#FDF0D8",
+    backgroundColor: "#F3E8D0",
     borderWidth: 2,
-    borderColor: "#D9932E",
+    borderColor: "#C4A05A",
   },
 
   currentCore: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#D9932E",
+    backgroundColor: "#C4A05A",
   },
 
   pendingDot: {
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   },
 
   currentTime: {
-    color: "#D9912C",
+    color: "#C4A05A",
     fontWeight: "600",
   },
 

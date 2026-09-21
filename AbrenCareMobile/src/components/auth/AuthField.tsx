@@ -93,9 +93,9 @@ const styles = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    minHeight: 54,
+    minHeight: 48,
     paddingHorizontal: 12,
   },
   icon: {

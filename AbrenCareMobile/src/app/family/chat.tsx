@@ -198,7 +198,7 @@ export default function FamilyChat() {
           onPress={() => setSheetOpen(true)}
           accessibilityLabel={t.familyChat.attachTitle}
         >
-          <Ionicons name="attach" size={20} color="#6B8E55" />
+          <Ionicons name="attach" size={20} color="#8B9A7C" />
         </TouchableOpacity>
 
         <TextInput
@@ -244,7 +244,7 @@ export default function FamilyChat() {
                   <Ionicons
                     name={fileIcons[attachment.kind]}
                     size={18}
-                    color="#2F855A"
+                    color="#8B9A7C"
                   />
                 </View>
 
@@ -289,7 +289,7 @@ function FileCard({
         <Ionicons
           name={fileIcons[file.kind]}
           size={18}
-          color={outgoing ? '#FFFFFF' : '#2F855A'}
+          color={outgoing ? '#FFFFFF' : '#8B9A7C'}
         />
       </View>
 
@@ -317,7 +317,7 @@ function FileCard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F5F0',
+    backgroundColor: '#F6F2EA',
   },
 
   header: {
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 11,
-    backgroundColor: '#91A887',
+    backgroundColor: '#8B9A7C',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
 
   myBubble: {
-    backgroundColor: '#91A887',
+    backgroundColor: '#8B9A7C',
     padding: 12,
     borderRadius: 14,
     maxWidth: 260,
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: '#EAF2EB',
+    backgroundColor: '#E8EDE4',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 12,
-    backgroundColor: '#EFF3EC',
+    backgroundColor: '#E8EDE4',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 12,
-    backgroundColor: '#91A887',
+    backgroundColor: '#8B9A7C',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#27352A',
+    color: '#2A2622',
   },
 
   sheetSubtitle: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#EAF2EB',
+    backgroundColor: '#E8EDE4',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   sheetRowLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#27352A',
+    color: '#2A2622',
   },
 
   sheetRowMeta: {
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     height: 50,
     borderRadius: 14,
-    backgroundColor: '#F4F6F2',
+    backgroundColor: '#E8EDE4',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -637,6 +637,6 @@ const styles = StyleSheet.create({
   sheetCancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#4A5D45',
+    color: '#5E7054',
   },
 });

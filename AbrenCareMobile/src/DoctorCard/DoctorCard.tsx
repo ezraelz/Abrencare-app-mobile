@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   availability: {
     fontSize: 12,
-    color: '#10B981',
+    color: '#7E93A8',
     marginTop: 8,
   },
 });

@@ -58,7 +58,7 @@ export const toneColors: Record<ResultTone, { text: string; bg: string }> = {
   normal: { text: '#5F9B6E', bg: '#EAF7EE' },
   borderline: { text: '#D48935', bg: '#FFF2DE' },
   elevated: { text: '#D97D35', bg: '#FFF0DF' },
-  monitoring: { text: '#C28A1D', bg: '#FFF6EC' },
+  monitoring: { text: '#C4A05A', bg: '#F3E8D0' },
 };
 
 const PHYSICIAN = 'Dr. Haile Bekele';

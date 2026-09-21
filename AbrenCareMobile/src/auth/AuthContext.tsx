@@ -11,9 +11,11 @@ import {
   DEFAULT_MONITORING,
   emptyUser,
   isCareService,
+  kindFromRelationship,
   type AuthUser,
   type CareService,
   type FamilyMember,
+  type FamilyRelationship,
   type Gender,
   type MonitorFrequency,
   type MonitorMetric,
@@ -54,6 +56,51 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function normalizeMember(value: unknown): FamilyMember | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const member = value as Partial<FamilyMember>;
+  if (typeof member.id !== 'string' || typeof member.name !== 'string') {
+    return null;
+  }
+
+  const relationship: FamilyRelationship =
+    member.relationship === 'mother' ||
+    member.relationship === 'father' ||
+    member.relationship === 'parent' ||
+    member.relationship === 'spouse' ||
+    member.relationship === 'child' ||
+    member.relationship === 'other'
+      ? member.relationship
+      : member.kind === 'spouse'
+        ? 'spouse'
+        : member.kind === 'child'
+          ? 'child'
+          : 'parent';
+
+  return {
+    id: member.id,
+    kind: kindFromRelationship(relationship),
+    name: member.name,
+    relationship,
+    dateOfBirth: typeof member.dateOfBirth === 'string' ? member.dateOfBirth : '',
+    phone: typeof member.phone === 'string' ? member.phone : '',
+    city: typeof member.city === 'string' ? member.city : '',
+    address: typeof member.address === 'string' ? member.address : '',
+    emergencyPhone:
+      typeof member.emergencyPhone === 'string' ? member.emergencyPhone : '',
+    careNeed: member.careNeed ?? null,
+    preferredLanguage:
+      member.preferredLanguage === 'en' || member.preferredLanguage === 'am'
+        ? member.preferredLanguage
+        : '',
+    notes: typeof member.notes === 'string' ? member.notes : '',
+    status: member.status === 'pending' ? 'pending' : 'active',
+  };
+}
+
 function nameFromEmail(email: string) {
   const handle = email.split('@')[0] ?? '';
 
@@ -86,15 +133,9 @@ function normalizeUser(parsed: unknown): AuthUser | null {
     phone: typeof value.phone === 'string' ? value.phone : '',
     services,
     familyMembers: Array.isArray(value.familyMembers)
-      ? value.familyMembers.filter(
-          (member): member is FamilyMember =>
-            Boolean(
-              member &&
-                typeof member.id === 'string' &&
-                typeof member.kind === 'string' &&
-                typeof member.name === 'string',
-            ),
-        )
+      ? value.familyMembers
+          .map(normalizeMember)
+          .filter((member): member is FamilyMember => member !== null)
       : [],
     familyOnboarded: Boolean(value.familyOnboarded),
     dateOfBirth: typeof value.dateOfBirth === 'string' ? value.dateOfBirth : '',

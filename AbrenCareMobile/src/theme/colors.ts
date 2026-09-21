@@ -6,7 +6,7 @@ export const Colors = {
   primarySoft: '#F8EEDC',
 
   // Backgrounds
-  background: '#F8F6F2',
+  background: '#F6F2EA',
   card: '#FFFFFF',
   surface: '#FFFFFF',
   dark: '#252C36',

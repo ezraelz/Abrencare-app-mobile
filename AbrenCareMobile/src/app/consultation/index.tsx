@@ -26,7 +26,7 @@ import { monthTitle } from "@/consultation/format";
 import { fromDateKey, toDateKey } from "@/family/AppointmentsContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 export default function ConsultationBooking() {
   const { t } = useLanguage();
@@ -510,7 +510,7 @@ function FilterChip({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#F4F7FB",
+    backgroundColor: "#EEF2F6",
     alignItems: "center",
     justifyContent: "center",
   },

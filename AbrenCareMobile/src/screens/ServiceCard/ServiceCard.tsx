@@ -1,9 +1,8 @@
 import { useAuth } from "@/auth/AuthContext";
-import { dashboardFor, onboardingPath } from "@/auth/serviceTheme";
+import { dashboardFor, onboardingPath, serviceThemes } from "@/auth/serviceTheme";
 import type { CareService } from "@/auth/types";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -37,6 +36,7 @@ type ServiceItem = {
   features: string[];
   accentColor: string;
   iconBackground: string;
+  cardBackground: string;
   tags?: string[];
 };
 
@@ -61,8 +61,9 @@ export default function ServiceCard({ services }: Props) {
       category: t.home.familyCategory,
       description: t.home.familyDescription,
       features: [...t.home.familyFeatures],
-      accentColor: "#2F80ED",
-      iconBackground: "#EAF6FF",
+      accentColor: serviceThemes.family.accent,
+      iconBackground: serviceThemes.family.accent,
+      cardBackground: serviceThemes.family.card,
       tags: [...t.home.familyTags],
     },
     {
@@ -72,8 +73,9 @@ export default function ServiceCard({ services }: Props) {
       category: t.home.executiveCategory,
       description: t.home.executiveDescription,
       features: [...t.home.executiveFeatures],
-      accentColor: "#8B5CF6",
-      iconBackground: "#F3E8FF",
+      accentColor: serviceThemes.executive.accent,
+      iconBackground: serviceThemes.executive.accent,
+      cardBackground: serviceThemes.executive.card,
       tags: [...t.home.executiveTags],
     },
     {
@@ -83,8 +85,9 @@ export default function ServiceCard({ services }: Props) {
       category: t.home.consultationCategory,
       description: t.home.consultationDescription,
       features: [...t.home.consultationFeatures],
-      accentColor: "#10B981",
-      iconBackground: "#D1FAE5",
+      accentColor: serviceThemes.consultation.accent,
+      iconBackground: serviceThemes.consultation.accent,
+      cardBackground: serviceThemes.consultation.card,
       tags: [...t.home.consultationTags],
     },
   ];
@@ -113,7 +116,7 @@ export default function ServiceCard({ services }: Props) {
       router.push(onboardingPath(service));
       return;
     }
-    router.push({ pathname: "/signup", params: { service } });
+    router.push({ pathname: "/service", params: { service } });
   };
 
   return (
@@ -279,19 +282,26 @@ function ServiceSlide({
 
   return (
     <Animated.View
-      style={[styles.slide, cardStyle, { width: cardWidth, marginRight: CARD_GAP }]}
+      style={[
+        styles.slide,
+        cardStyle,
+        {
+          width: cardWidth,
+          marginRight: CARD_GAP,
+          boxShadow: "0 10px 28px rgba(42, 38, 34, 0.14)",
+        },
+      ]}
     >
       <Pressable
         onPress={onChoose}
-        style={[styles.card, { borderColor: item.accentColor }]}
+        style={[
+          styles.card,
+          {
+            backgroundColor: item.cardBackground,
+            borderColor: item.accentColor + "99",
+          },
+        ]}
       >
-        <LinearGradient
-          colors={[item.accentColor, "transparent"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.cardAccent}
-        />
-
         <View style={styles.cardHeader}>
           <Animated.View
             style={[
@@ -300,7 +310,7 @@ function ServiceSlide({
               iconStyle,
             ]}
           >
-            <Ionicons name={item.icon} size={28} color={item.accentColor} />
+            <Ionicons name={item.icon} size={28} color="#FFFFFF" />
           </Animated.View>
 
           <Text style={[styles.category, { color: item.accentColor }]}>
@@ -334,7 +344,7 @@ function ServiceSlide({
                 key={`${item.id}-tag-${tagIndex}`}
                 style={[
                   styles.tag,
-                  { backgroundColor: item.iconBackground },
+                  { backgroundColor: `${item.accentColor}22` },
                 ]}
               >
                 <Text style={[styles.tagText, { color: item.accentColor }]}>

@@ -28,7 +28,7 @@ const medicationMeta: {
 
 const medicationTones: Record<MedicationTone, { color: string; bg: string }> = {
   taken: { color: "#57A35A", bg: "#EAF6EA" },
-  due: { color: "#E59C2D", bg: "#FFF2E3" },
+  due: { color: "#C4A05A", bg: "#F3E8D0" },
   upcoming: { color: "#9AA3AF", bg: "#F1F1F1" },
 };
 
@@ -42,12 +42,12 @@ const alertTones: Record<
   { color: string; bg: string; border: string }
 > = {
   high: { color: "#D9534F", bg: "#FDECEC", border: "#F3C4C2" },
-  reminder: { color: "#C28A1D", bg: "#FFF6EC", border: "#F0C37A" },
+  reminder: { color: "#C4A05A", bg: "#F3E8D0", border: "#E0C078" },
 };
 
 const programmeTones: Record<ProgrammeTone, { color: string; bg: string }> = {
   active: { color: "#57A35A", bg: "#EAF6EA" },
-  soon: { color: "#E59C2D", bg: "#FFF2E3" },
+  soon: { color: "#C4A05A", bg: "#F3E8D0" },
   booked: { color: "#7C8CD6", bg: "#EEF2FF" },
   track: { color: "#57A35A", bg: "#EAF6EA" },
   scheduled: { color: "#7C8CD6", bg: "#EEF2FF" },
@@ -170,7 +170,7 @@ export default function ExecutiveProgramme() {
           </View>
 
           <View style={styles.legendRow}>
-            <View style={[styles.dot, { backgroundColor: "#E59C2D" }]} />
+            <View style={[styles.dot, { backgroundColor: "#C4A05A" }]} />
             <Text style={styles.legendText}>
               {dueSoonCount} · {t.executiveProgramme.dueSoon}
             </Text>
@@ -240,7 +240,7 @@ export default function ExecutiveProgramme() {
             <Text style={styles.cardLinkText}>
               {t.executiveProgramme.viewAllMedications}
             </Text>
-            <Ionicons name="arrow-forward" size={13} color="#C28A1D" />
+            <Ionicons name="arrow-forward" size={13} color="#C4A05A" />
           </TouchableOpacity>
         </View>
 
@@ -251,7 +251,7 @@ export default function ExecutiveProgramme() {
           </Text>
 
           <View style={styles.warnBadge}>
-            <Ionicons name="notifications" size={11} color="#C28A1D" />
+            <Ionicons name="notifications" size={11} color="#C4A05A" />
             <Text style={styles.countBadgeText}>{alerts.length}</Text>
           </View>
         </View>
@@ -294,7 +294,7 @@ export default function ExecutiveProgramme() {
           <Text style={styles.outlineButtonText}>
             {t.executiveProgramme.viewAllAlerts}
           </Text>
-          <Ionicons name="arrow-forward" size={14} color="#D79A24" />
+          <Ionicons name="arrow-forward" size={14} color="#C4A05A" />
         </TouchableOpacity>
 
         {/* Health programme */}
@@ -400,17 +400,17 @@ function SummaryCard({ number, label }: { number: string; label: string }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F8F4EC",
   },
 
   container: {
     flex: 1,
-    backgroundColor: "#F8F5F0",
+    backgroundColor: "#F8F4EC",
     padding: 16,
   },
 
   smallTitle: {
-    color: "#C28A1D",
+    color: "#C4A05A",
     fontSize: 10,
     letterSpacing: 1,
     fontWeight: "600",
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   },
 
   countBadge: {
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#FFF2E3",
+    backgroundColor: "#F3E8D0",
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
   },
 
   card: {
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#D79A24",
+    backgroundColor: "#C4A05A",
   },
 
   progressFillGreen: {
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
   },
 
   progressLabelGreen: {
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   cardLinkText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#C28A1D",
+    color: "#C4A05A",
   },
 
   /* Alerts */
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D79A24",
+    borderColor: "#C4A05A",
     backgroundColor: "#FFF",
     flexDirection: "row",
     alignItems: "center",
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   outlineButtonText: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#D79A24",
+    color: "#C4A05A",
   },
 
   /* Health programme list */
@@ -817,7 +817,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#D79A24",
+    backgroundColor: "#C4A05A",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

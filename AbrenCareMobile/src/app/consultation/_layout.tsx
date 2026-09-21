@@ -17,7 +17,7 @@ export default function ConsultationLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#6F89B9',
+          tabBarActiveTintColor: '#7E93A8',
           tabBarInactiveTintColor: '#A0AEC0',
           tabBarStyle: {
             height: 70,

@@ -17,6 +17,7 @@ type Variant = 'family' | 'executive';
 type Theme = {
   accent: string;
   accentSoft: string;
+  background: string;
   iconColor: string;
   labelColor: string;
   titleColor: string;
@@ -28,26 +29,28 @@ type Theme = {
 
 const themes: Record<Variant, Theme> = {
   family: {
-    accent: '#8DA684',
-    accentSoft: '#EAF2EB',
-    iconColor: '#2F855A',
-    labelColor: '#7A8A7A',
-    titleColor: '#2F3A2F',
-    subtitleColor: '#6F7F73',
-    lineColor: '#6A8D69',
-    secondaryTextColor: '#4A5D45',
-    borderColor: '#D6DCD2',
+    accent: '#8B9A7C',
+    accentSoft: '#E8EDE4',
+    background: '#F6F2EA',
+    iconColor: '#8B9A7C',
+    labelColor: '#6F6A64',
+    titleColor: '#2A2622',
+    subtitleColor: '#6F6A64',
+    lineColor: '#8B9A7C',
+    secondaryTextColor: '#5E7054',
+    borderColor: '#E5E0D6',
   },
   executive: {
-    accent: '#D79A24',
-    accentSoft: '#FFF2E3',
-    iconColor: '#C28A1D',
-    labelColor: '#C28A1D',
-    titleColor: '#2D2D2D',
-    subtitleColor: '#8A7254',
-    lineColor: '#E59C2D',
-    secondaryTextColor: '#B07E1C',
-    borderColor: '#EADFC9',
+    accent: '#C4A05A',
+    accentSoft: '#F3E8D0',
+    background: '#F8F4EC',
+    iconColor: '#C4A05A',
+    labelColor: '#C4A05A',
+    titleColor: '#2A2622',
+    subtitleColor: '#7A6F5D',
+    lineColor: '#C4A05A',
+    secondaryTextColor: '#C4A05A',
+    borderColor: '#E8DFCC',
   },
 };
 
@@ -81,7 +84,7 @@ export default function ServiceAuthGate({ variant, redirectTo }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -172,7 +175,7 @@ export default function ServiceAuthGate({ variant, redirectTo }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F5F0',
+    backgroundColor: '#F6F2EA',
   },
 
   content: {
@@ -290,6 +293,6 @@ const styles = StyleSheet.create({
 
   trustText: {
     fontSize: 12,
-    color: '#7A8A7A',
+    color: '#6F6A64',
   },
 });

@@ -24,7 +24,7 @@ import {
 } from "@/consultation/doctors";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 export default function ConsultationDoctors() {
   const { t } = useLanguage();
@@ -351,7 +351,7 @@ function FilterChip({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {

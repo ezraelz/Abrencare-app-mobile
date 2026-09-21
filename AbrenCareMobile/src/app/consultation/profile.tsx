@@ -16,7 +16,7 @@ import { useRouter } from "expo-router";
 import { initialsFor, useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 export default function ConsultationProfile() {
   const { t, language, setLanguage } = useLanguage();
@@ -269,7 +269,7 @@ function InfoRow({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 11,
-    backgroundColor: "#F4F7FB",
+    backgroundColor: "#EEF2F6",
     alignItems: "center",
     justifyContent: "center",
   },

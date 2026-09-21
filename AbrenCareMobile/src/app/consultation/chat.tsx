@@ -19,7 +19,7 @@ import { useConsultations } from "@/consultation/ConsultationContext";
 import { doctorById, specialtyLabel } from "@/consultation/doctors";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const BLUE = "#6F89B9";
+const BLUE = "#7E93A8";
 
 type FileKind = "photo" | "document" | "lab";
 
@@ -379,7 +379,7 @@ function FileCard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FAF9F6",
+    backgroundColor: "#F4F6F8",
   },
 
   header: {
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: "#F4F7FB",
+    backgroundColor: "#EEF2F6",
   },
 
   noticeText: {
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     height: 50,
     borderRadius: 14,
-    backgroundColor: "#F4F7FB",
+    backgroundColor: "#EEF2F6",
     alignItems: "center",
     justifyContent: "center",
   },

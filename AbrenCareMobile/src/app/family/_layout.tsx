@@ -15,7 +15,7 @@ export default function FamilyLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#2F80ED',
+        tabBarActiveTintColor: '#8B9A7C',
         tabBarInactiveTintColor: '#A0AEC0',
         tabBarStyle: {
           height: 70,
