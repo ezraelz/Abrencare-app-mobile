@@ -31,6 +31,47 @@ import {
 import type { AuthState, User } from "../types/authTypes";
 
 /* -------------------------------------------------------------------------- */
+/* Care service types (mirrors your old context)                              */
+/* -------------------------------------------------------------------------- */
+
+export type CareService = "family" | "executive" | "consultation";
+
+export const CARE_SERVICES: CareService[] = [
+  "family",
+  "executive",
+  "consultation",
+];
+
+export function isCareService(value: unknown): value is CareService {
+  return (
+    typeof value === "string" &&
+    (CARE_SERVICES as string[]).includes(value)
+  );
+}
+
+export function onboardingPath(service: CareService): string {
+  switch (service) {
+    case "family":
+      return "/onboarding/family";
+    case "executive":
+      return "/onboarding/executive";
+    case "consultation":
+      return "/onboarding/consultation";
+  }
+}
+
+export function dashboardFor(service: CareService): string {
+  switch (service) {
+    case "family":
+      return "/(tabs)/family";
+    case "executive":
+      return "/(tabs)/executive";
+    case "consultation":
+      return "/(tabs)/consultation";
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Types                                                                      */
 /* -------------------------------------------------------------------------- */
 
@@ -57,7 +98,10 @@ export interface AuthContextType extends AuthState {
   ) => Promise<void>;
 
   requestPasswordReset: (email: string) => Promise<void>;
-  verifyResetCode: (email: string, code: string) => Promise<{ resetToken: string }>;
+  verifyResetCode: (
+    email: string,
+    code: string
+  ) => Promise<{ resetToken: string }>;
   resetPassword: (resetToken: string, newPassword: string) => Promise<void>;
 
   updateUser: (user: User) => void;
@@ -68,6 +112,13 @@ export interface AuthContextType extends AuthState {
   isSuperuser: boolean;
   isAdmin: boolean;
   isTokenExpiringSoon: boolean;
+
+  /* ---- Service helpers (from old context) ---- */
+  hasService: (service: CareService) => boolean;
+  needsOnboarding: (service: CareService) => boolean;
+  nextRouteFor: (service: CareService) => string;
+  addService: (service: CareService) => void;
+  services: CareService[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -75,6 +126,32 @@ export interface AuthContextType extends AuthState {
 /* -------------------------------------------------------------------------- */
 
 const TOKEN_EXPIRY_WARNING_MS = 5 * 60 * 1000; // 5 minutes
+const SERVICES_STORAGE_KEY = "abrencare-services";
+
+/* -------------------------------------------------------------------------- */
+/* Local service storage helpers                                              */
+/* -------------------------------------------------------------------------- */
+
+function readStoredServices(): CareService[] {
+  try {
+    const storage = (globalThis as { localStorage?: Storage }).localStorage;
+    const raw = storage?.getItem(SERVICES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isCareService) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistServices(services: CareService[]) {
+  try {
+    const storage = (globalThis as { localStorage?: Storage }).localStorage;
+    storage?.setItem(SERVICES_STORAGE_KEY, JSON.stringify(services));
+  } catch {
+    // ignore
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Initial State                                                              */
@@ -103,7 +180,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(INITIAL_STATE);
   const [isTokenExpiringSoon, setIsTokenExpiringSoon] = useState(false);
-  const tokenExpiryCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [services, setServices] = useState<CareService[]>(readStoredServices);
+
+  const tokenExpiryCheckInterval =
+    useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTokenExpiryMonitoringRef = useRef<(() => void) | null>(null);
   const isMounted = useRef<boolean>(true);
 
   /* ------------------------------------------------------------------------ */
@@ -125,23 +206,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* Role Helpers                                                             */
   /* ------------------------------------------------------------------------ */
 
-  const getRoleFromToken = useCallback((token: string): string | undefined => {
-    const decoded = decodeToken(token);
-    if (!decoded) return undefined;
-    return (decoded.role as string | undefined) ?? (decoded.role_name as string | undefined);
-  }, []);
+  const getRoleFromToken = useCallback(
+    (token: string): string | undefined => {
+      const decoded = decodeToken(token);
+      if (!decoded) return undefined;
+      return (
+        (decoded.role as string | undefined) ??
+        (decoded.role_name as string | undefined)
+      );
+    },
+    []
+  );
 
-  const getRoleFromUser = useCallback((user: User | null): string | undefined => {
-    if (!user) return undefined;
-    return (user as User & { role_name?: string }).role_name;
-  }, []);
+  const getRoleFromUser = useCallback(
+    (user: User | null): string | undefined => {
+      if (!user) return undefined;
+      return (user as User & { role_name?: string }).role_name;
+    },
+    []
+  );
 
   /* ------------------------------------------------------------------------ */
   /* Build Authentication State                                               */
   /* ------------------------------------------------------------------------ */
 
   const buildAuthState = useCallback(
-    (user: User, accessToken: string, refreshToken: string | null): AuthState => {
+    (
+      user: User,
+      accessToken: string,
+      refreshToken: string | null
+    ): AuthState => {
       const decoded = decodeToken(accessToken);
       const role = getRoleFromUser(user) ?? getRoleFromToken(accessToken);
 
@@ -186,63 +280,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /* ------------------------------------------------------------------------ */
-  /* Check Token Expiry Status                                                */
-  /* ------------------------------------------------------------------------ */
-
-  const checkTokenExpiry = useCallback(async (): Promise<void> => {
-    const token = await getAccessToken();
-    if (!token) {
-      setIsTokenExpiringSoon(false);
-      return;
-    }
-
-    if (!isTokenValid(token)) {
-      setIsTokenExpiringSoon(false);
-      return;
-    }
-
-    const decoded = decodeToken(token);
-    if (!decoded?.exp) {
-      setIsTokenExpiringSoon(false);
-      return;
-    }
-
-    const expiresIn = decoded.exp * 1000 - Date.now();
-    const isExpiringSoon = expiresIn > 0 && expiresIn < TOKEN_EXPIRY_WARNING_MS;
-
-    setIsTokenExpiringSoon(isExpiringSoon);
-
-    // If expiring soon, try to refresh proactively
-    if (isExpiringSoon && state.isAuthenticated) {
-      try {
-        await refreshSession();
-      } catch (error) {
-        console.warn("Proactive token refresh failed:", error);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isAuthenticated]);
-
-  /* ------------------------------------------------------------------------ */
-  /* Start Token Expiry Monitoring                                            */
-  /* ------------------------------------------------------------------------ */
-
-  const startTokenExpiryMonitoring = useCallback((): void => {
-    if (tokenExpiryCheckInterval.current) {
-      clearInterval(tokenExpiryCheckInterval.current);
-      tokenExpiryCheckInterval.current = null;
-    }
-
-    // Check every minute
-    tokenExpiryCheckInterval.current = setInterval(() => {
-      void checkTokenExpiry();
-    }, 60_000);
-    
-    // Immediate check
-    void checkTokenExpiry();
-  }, [checkTokenExpiry]);
-
-  /* ------------------------------------------------------------------------ */
   /* Current User                                                             */
   /* ------------------------------------------------------------------------ */
 
@@ -260,7 +297,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* Refresh Session                                                          */
   /* ------------------------------------------------------------------------ */
 
-  const refreshSession = useCallback(async (): Promise<string | null> => {
+  const refreshSession: () => Promise<string | null> = useCallback(
+    async (): Promise<string | null> => {
     try {
       const refreshToken = await getRefreshToken();
 
@@ -269,10 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      // Attempt to get a valid token (this will refresh if needed)
       const accessToken = await refreshAccessToken();
-
-      // Fetch the latest user data
       const user = await getCurrentUser();
 
       if (!user) {
@@ -283,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (isMounted.current) {
         setState(buildAuthState(user, accessToken, currentRefreshToken));
-        startTokenExpiryMonitoring();
+        startTokenExpiryMonitoringRef.current?.();
       }
 
       return accessToken;
@@ -292,7 +327,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetAuthState();
       return null;
     }
-  }, [buildAuthState, getCurrentUser, resetAuthState, startTokenExpiryMonitoring]);
+    },
+    [
+      buildAuthState,
+      getCurrentUser,
+      resetAuthState,
+    ]
+  );
 
   /* ------------------------------------------------------------------------ */
   /* Ensure Valid Session                                                     */
@@ -302,7 +343,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = await ensureValidToken();
       if (token) {
-        // Update state if needed
         const user = await getCurrentUser();
         if (user && isMounted.current) {
           const refreshToken = await getRefreshToken();
@@ -318,6 +358,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [buildAuthState, getCurrentUser]);
 
   /* ------------------------------------------------------------------------ */
+  /* Check Token Expiry Status                                                */
+  /* ------------------------------------------------------------------------ */
+
+  const checkTokenExpiry = useCallback(async (): Promise<void> => {
+    const token = await getAccessToken();
+    if (!token || !isTokenValid(token)) {
+      setIsTokenExpiringSoon(false);
+      return;
+    }
+
+    const decoded = decodeToken(token);
+    if (!decoded?.exp) {
+      setIsTokenExpiringSoon(false);
+      return;
+    }
+
+    const expiresIn = decoded.exp * 1000 - Date.now();
+    const isExpiringSoon =
+      expiresIn > 0 && expiresIn < TOKEN_EXPIRY_WARNING_MS;
+
+    setIsTokenExpiringSoon(isExpiringSoon);
+
+    if (isExpiringSoon && state.isAuthenticated) {
+      try {
+        await refreshSession();
+      } catch (error) {
+        console.warn("Proactive token refresh failed:", error);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.isAuthenticated, refreshSession]);
+
+  /* ------------------------------------------------------------------------ */
+  /* Start Token Expiry Monitoring                                            */
+  /* ------------------------------------------------------------------------ */
+
+  const startTokenExpiryMonitoring = useCallback((): void => {
+    if (tokenExpiryCheckInterval.current) {
+      clearInterval(tokenExpiryCheckInterval.current);
+      tokenExpiryCheckInterval.current = null;
+    }
+
+    tokenExpiryCheckInterval.current = setInterval(() => {
+      void checkTokenExpiry();
+    }, 60_000);
+
+    void checkTokenExpiry();
+  }, [checkTokenExpiry]);
+
+  startTokenExpiryMonitoringRef.current = startTokenExpiryMonitoring;
+
+  /* ------------------------------------------------------------------------ */
   /* Initialize Authentication                                                */
   /* ------------------------------------------------------------------------ */
 
@@ -327,7 +419,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const accessToken = await getAccessToken();
         const refreshToken = await getRefreshToken();
 
-        // No session exists
         if (!accessToken && !refreshToken) {
           if (isMounted.current) {
             setState({ ...INITIAL_STATE, isLoading: false });
@@ -335,7 +426,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Existing valid access token
         if (accessToken && isTokenValid(accessToken)) {
           const user = await getCurrentUser();
 
@@ -347,13 +437,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Access token expired → refresh
         if (refreshToken) {
           await refreshSession();
           return;
         }
 
-        // No usable session
         if (isMounted.current) {
           resetAuthState();
         }
@@ -367,16 +455,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void initializeAuth();
 
-    // Set up session expired listener
     const unsubscribeSessionExpired = onSessionExpired(() => {
       console.warn("Authentication session expired.");
       resetAuthState();
       toast.error("Your session has expired. Please sign in again.");
     });
 
-    // Set up token refreshed listener
     const unsubscribeTokenRefreshed = onTokenRefreshed(() => {
-      // Update token expiry monitoring
       void checkTokenExpiry();
     });
 
@@ -388,6 +473,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /* ------------------------------------------------------------------------ */
+  /* Service helpers                                                          */
+  /* ------------------------------------------------------------------------ */
+
+  const hasService = useCallback(
+    (service: CareService): boolean => services.includes(service),
+    [services]
+  );
+
+  const addService = useCallback(
+    (service: CareService): void => {
+      setServices((prev) => {
+        if (prev.includes(service)) return prev;
+        const next = [...prev, service];
+        persistServices(next);
+        return next;
+      });
+    },
+    []
+  );
+
+  // Onboarding flags — driven off the backend user if available, otherwise
+  // fall back to service membership. Adjust once your API exposes these.
+  const needsOnboarding = useCallback(
+    (service: CareService): boolean => {
+      if (!services.includes(service)) return false;
+      const user = state.user as
+        | (User & {
+            familyOnboarded?: boolean;
+            executiveOnboarded?: boolean;
+            consultationOnboarded?: boolean;
+          })
+        | null;
+      if (!user) return true;
+
+      if (service === "family") return !user.familyOnboarded;
+      if (service === "executive") return !user.executiveOnboarded;
+      return !user.consultationOnboarded;
+    },
+    [services, state.user]
+  );
+
+  const nextRouteFor = useCallback(
+    (service: CareService): string => {
+      if (!services.includes(service)) {
+        return `/signup?service=${service}`;
+      }
+      if (needsOnboarding(service)) {
+        return onboardingPath(service);
+      }
+      return dashboardFor(service);
+    },
+    [services, needsOnboarding]
+  );
+
+  /* ------------------------------------------------------------------------ */
   /* Login                                                                    */
   /* ------------------------------------------------------------------------ */
 
@@ -396,24 +536,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setState((prev) => ({ ...prev, isLoading: true }));
 
-        const response = await authApi.post<{ access: string; refresh: string }>(
-          "/auth/login/",
-          {
-            email,
-            password,
-          }
-        );
+        const response = await authApi.post<{
+          access: string;
+          refresh: string;
+        }>("/auth/login/", { email, password });
 
         const { access, refresh } = response.data;
 
         if (!access || !refresh) {
-          throw new Error("Login response did not contain authentication tokens.");
+          throw new Error(
+            "Login response did not contain authentication tokens."
+          );
         }
 
-        // Store tokens securely
         await setTokens(access, refresh);
 
-        // Fetch authoritative user information
         const user = await getCurrentUser();
 
         if (!user) {
@@ -425,7 +562,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           startTokenExpiryMonitoring();
         }
 
-        toast.success(`Welcome back, ${user.first_name || user.email}!`);
+        toast.success(
+          `Welcome back, ${user.first_name || user.email}!`
+        );
       } catch (error: unknown) {
         console.error("Login error:", error);
 
@@ -433,12 +572,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setState((prev) => ({ ...prev, isLoading: false }));
         }
 
-        // Extract meaningful error message
         let message = "Login failed. Please try again.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { status?: number; data?: Record<string, unknown> } };
-          
+          const err = error as {
+            response?: { status?: number; data?: Record<string, unknown> };
+          };
+
           if (err.response?.status === 401) {
             message = "Invalid email or password.";
           } else if (err.response?.data?.detail) {
@@ -468,24 +608,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       username: string,
       password: string,
-      email: string,
+      email: string
     ): Promise<User | null> => {
       try {
         setState((prev) => ({ ...prev, isLoading: true }));
 
         const response = await api.post<{ user: User; message?: string }>(
           "/auth/register/",
-          {
-            username,
-            password,
-            email,
-          }
+          { username, password, email }
         );
 
         const user = response.data?.user ?? null;
 
         toast.success(
-          response.data?.message || "Registration successful! Please verify your email."
+          response.data?.message ||
+            "Registration successful! Please verify your email."
         );
 
         if (isMounted.current) {
@@ -503,18 +640,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let message = "Registration failed. Please try again.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { status?: number; data?: Record<string, unknown> } };
-          
+          const err = error as {
+            response?: { status?: number; data?: Record<string, unknown> };
+          };
+
           if (err.response?.status === 400) {
             const data = err.response.data;
             if (data?.email) {
               const emailError = data.email;
-              message = Array.isArray(emailError) ? String(emailError[0]) : String(emailError);
+              message = Array.isArray(emailError)
+                ? String(emailError[0])
+                : String(emailError);
             } else if (data?.error) {
               const errorData = data.error;
-              message = typeof errorData === "string" ? errorData : JSON.stringify(errorData);
+              message =
+                typeof errorData === "string"
+                  ? errorData
+                  : JSON.stringify(errorData);
             } else {
-              message = "Please check the information you provided.";
+              message =
+                "Please check the information you provided.";
             }
           } else if (err.response?.data?.detail) {
             message = String(err.response.data.detail);
@@ -540,10 +685,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api.post("/auth/logout/");
       }
     } catch (error) {
-      // Logout should still succeed locally even if the server request fails
       console.error("Logout API error:", error);
     } finally {
       resetAuthState();
+      // Clear local service selection too
+      setServices([]);
+      persistServices([]);
       toast.success("Logged out successfully.");
     }
   }, [resetAuthState]);
@@ -559,10 +706,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const updatedUser = response.data;
 
         if (updatedUser && isMounted.current) {
-          setState((prev) => ({
-            ...prev,
-            user: updatedUser,
-          }));
+          setState((prev) => ({ ...prev, user: updatedUser }));
         }
 
         toast.success("Profile updated successfully.");
@@ -573,11 +717,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let message = "Failed to update profile.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { data?: Record<string, unknown> } };
+          const err = error as {
+            response?: { data?: Record<string, unknown> };
+          };
           message = String(
             err.response?.data?.detail ||
-            err.response?.data?.error ||
-            "Failed to update profile."
+              err.response?.data?.error ||
+              "Failed to update profile."
           );
         }
 
@@ -603,11 +749,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let message = "Failed to deactivate your account.";
 
       if (error && typeof error === "object" && "response" in error) {
-        const err = error as { response?: { data?: Record<string, unknown> } };
+        const err = error as {
+          response?: { data?: Record<string, unknown> };
+        };
         message = String(
           err.response?.data?.detail ||
-          err.response?.data?.error ||
-          "Failed to deactivate your account."
+            err.response?.data?.error ||
+            "Failed to deactivate your account."
         );
       }
 
@@ -621,23 +769,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* ------------------------------------------------------------------------ */
 
   const changePassword = useCallback(
-    async (currentPassword: string, newPassword: string): Promise<void> => {
+    async (
+      currentPassword: string,
+      newPassword: string
+    ): Promise<void> => {
       try {
         await api.post("/auth/password/change/", {
           current_password: currentPassword,
           new_password: newPassword,
         });
 
-        toast.success("Password changed successfully. Please sign in again on other devices.");
+        toast.success(
+          "Password changed successfully. Please sign in again on other devices."
+        );
       } catch (error: unknown) {
         console.error("Password change error:", error);
 
         let message = "Failed to change password.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { data?: Record<string, unknown> } };
+          const err = error as {
+            response?: { data?: Record<string, unknown> };
+          };
           const data = err.response?.data;
-          
+
           if (data?.error) {
             const errorData = data.error;
             if (typeof errorData === "string") {
@@ -660,7 +815,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   /* ------------------------------------------------------------------------ */
-  /* Request Password Reset                                                   */
+  /* Password reset flows (unchanged)                                         */
   /* ------------------------------------------------------------------------ */
 
   const requestPasswordReset = useCallback(
@@ -670,29 +825,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toast.success("If the email exists, a reset code has been sent.");
       } catch (error: unknown) {
         console.error("Password reset request error:", error);
-        // Always show the same message for security
         toast.success("If the email exists, a reset code has been sent.");
-        // Still throw for error handling in the component
         throw error;
       }
     },
     []
   );
 
-  /* ------------------------------------------------------------------------ */
-  /* Verify Reset Code                                                        */
-  /* ------------------------------------------------------------------------ */
-
   const verifyResetCode = useCallback(
-    async (email: string, code: string): Promise<{ resetToken: string }> => {
+    async (
+      email: string,
+      code: string
+    ): Promise<{ resetToken: string }> => {
       try {
-        const response = await authApi.post<{ reset_token: string; message?: string }>(
-          "/auth/password/reset/verify/",
-          {
-            email,
-            code,
-          }
-        );
+        const response = await authApi.post<{
+          reset_token: string;
+          message?: string;
+        }>("/auth/password/reset/verify/", { email, code });
 
         const { reset_token } = response.data;
 
@@ -700,7 +849,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Reset token not returned.");
         }
 
-        toast.success(response.data?.message || "Code verified successfully.");
+        toast.success(
+          response.data?.message || "Code verified successfully."
+        );
         return { resetToken: reset_token };
       } catch (error: unknown) {
         console.error("Password reset verification error:", error);
@@ -708,11 +859,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let message = "Invalid or expired verification code.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { data?: Record<string, unknown> } };
+          const err = error as {
+            response?: { data?: Record<string, unknown> };
+          };
           message = String(
             err.response?.data?.detail ||
-            err.response?.data?.error ||
-            "Invalid or expired verification code."
+              err.response?.data?.error ||
+              "Invalid or expired verification code."
           );
         }
 
@@ -723,10 +876,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  /* ------------------------------------------------------------------------ */
-  /* Reset Password                                                           */
-  /* ------------------------------------------------------------------------ */
-
   const resetPassword = useCallback(
     async (resetToken: string, newPassword: string): Promise<void> => {
       try {
@@ -735,16 +884,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           new_password: newPassword,
         });
 
-        toast.success("Password reset successfully. Please sign in with your new password.");
+        toast.success(
+          "Password reset successfully. Please sign in with your new password."
+        );
       } catch (error: unknown) {
         console.error("Password reset error:", error);
 
         let message = "Failed to reset password.";
 
         if (error && typeof error === "object" && "response" in error) {
-          const err = error as { response?: { data?: Record<string, unknown> } };
+          const err = error as {
+            response?: { data?: Record<string, unknown> };
+          };
           const data = err.response?.data;
-          
+
           if (data?.error) {
             const errorData = data.error;
             if (typeof errorData === "string") {
@@ -773,7 +926,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isMounted.current) return;
 
       setState((prev) => {
-        const role = getRoleFromUser(user) ?? (prev.accessToken ? getRoleFromToken(prev.accessToken) : undefined);
+        const role =
+          getRoleFromUser(user) ??
+          (prev.accessToken ? getRoleFromToken(prev.accessToken) : undefined);
 
         return {
           ...prev,
@@ -787,7 +942,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   /* ------------------------------------------------------------------------ */
-  /* Get Role                                                                 */
+  /* Role accessors                                                           */
   /* ------------------------------------------------------------------------ */
 
   const getRole = useCallback((): string | undefined => {
@@ -799,10 +954,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }, [state.user, state.accessToken, getRoleFromUser, getRoleFromToken]);
 
-  /* ------------------------------------------------------------------------ */
-  /* Has Role                                                                 */
-  /* ------------------------------------------------------------------------ */
-
   const hasRole = useCallback(
     (roles: string | string[]): boolean => {
       const roleList = Array.isArray(roles) ? roles : [roles];
@@ -812,7 +963,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      if (state.isSuperuser && roleList.some((role) => ["superuser", "owner"].includes(role))) {
+      if (
+        state.isSuperuser &&
+        roleList.some((role) => ["superuser", "owner"].includes(role))
+      ) {
         return true;
       }
 
@@ -850,6 +1004,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSuperuser: state.isSuperuser,
       isAdmin: state.isAdmin,
       isTokenExpiringSoon,
+
+      // Service helpers
+      services,
+      hasService,
+      needsOnboarding,
+      nextRouteFor,
+      addService,
     }),
     [
       state,
@@ -869,6 +1030,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasRole,
       getRole,
       isTokenExpiringSoon,
+      services,
+      hasService,
+      needsOnboarding,
+      nextRouteFor,
+      addService,
     ]
   );
 
